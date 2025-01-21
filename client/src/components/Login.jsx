@@ -51,6 +51,7 @@ const Login = () => {
           required
           {...register("password")}
         />
+
         <p className="forgot-password">
           <Link to={"/password/forgot"}>Forgot your password?</Link>
         </p>

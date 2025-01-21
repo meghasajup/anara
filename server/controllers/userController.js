@@ -14,9 +14,39 @@ const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 console.log("client:", client);
 
 export const register = catchAsyncError(async (req, res, next) => {
+  console.log("hi", req.body);
+
   try {
-    const { name, email, phone, password, verificationMethod } = req.body;
-    if (!name || !email || !phone || !password || !verificationMethod) {
+    const {
+      name,
+      email,
+      phone,
+      password,
+      verificationMethod,
+      guardian,
+      address,
+      dob,
+      gender,
+      image,
+      undertaking,
+      policeVerification,
+      educationQualification,
+    } = req.body;
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !password ||
+      !verificationMethod ||
+      !guardian ||
+      !address ||
+      !dob ||
+      !gender ||
+      !image ||
+      !undertaking ||
+      !policeVerification ||
+      !educationQualification
+    ) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
     function validatePhoneNumber(phone) {
@@ -66,6 +96,14 @@ export const register = catchAsyncError(async (req, res, next) => {
       email,
       phone,
       password,
+      guardian,
+      address,
+      dob,
+      gender,
+      image,
+      undertaking,
+      policeVerification,
+      educationQualification,
     };
 
     const user = await User.create(userData);

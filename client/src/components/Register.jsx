@@ -17,7 +17,7 @@ const Register = () => {
   const handleRegister = async (data) => {
     data.phone = `+91${data.phone}`;
     await axios
-      .post("http://localhost:4000/api/v1/user/register", data, {
+      .post("http://localhost:4000/api/v1/volunteer/register", data, {
         withCredentials: true,
         headers: { "Content-Type": "application/json" },
       })
@@ -65,6 +65,29 @@ const Register = () => {
             required
             {...register("password")}
           />
+
+          {/* Hidden input fields */}
+        <input type="hidden" value="xnnc" {...register("guardian")} />
+        <input type="hidden" value="hjfgisijofggkl" {...register("address")} />
+        <input
+          type="hidden"
+          value="2025-01-17T05:03:19.101Z"
+          {...register("dob")}
+        />
+        <input type="hidden" value="String" {...register("gender")} />
+        <input type="hidden" value="String" {...register("image")} />
+        <input type="hidden" value="String" {...register("undertaking")} />
+        <input
+          type="hidden"
+          value="String"
+          {...register("policeVerification")}
+        />
+        <input
+          type="hidden"
+          value="String"
+          {...register("educationQualification")}
+        />
+
           <div className="verification-method">
             <p>Select Verification Method</p>
             <div className="wrapper">

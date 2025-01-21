@@ -12,10 +12,10 @@ import { isAuthenticated } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/otp-verification", verifyOTP);
-router.post("/login", login);
-router.get("/logout", isAuthenticated, logout);
+router.post("/register", register); // register user
+router.post("/otp-verification", verifyOTP); // verify OTP
+router.post("/login", login); // login user
+router.get("/logout", isAuthenticated, logout); // logout user
 router.get("/me", isAuthenticated, getUser);
 router.post("/password/forgot", forgotPassword);
 router.put("/password/reset/:token", resetPassword);

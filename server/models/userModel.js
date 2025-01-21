@@ -5,6 +5,14 @@ import crypto from "crypto";
 
 const userSchema = new mongoose.Schema({
   name: String,
+  guardian: String,
+  address: String,
+  dob: Date,
+  gender: String,
+  image: String,
+  undertaking: String,
+  policeVerification: String,
+  educationQualification: String,
   email: String,
   password: {
     type: String,
