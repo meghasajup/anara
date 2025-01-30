@@ -50,6 +50,7 @@ adminSchema.methods.comparePassword = async function (enteredPassword) {
 //   return verificationCode;
 // };
 
+
 adminSchema.methods.generateToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRE,

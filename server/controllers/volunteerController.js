@@ -3,15 +3,7 @@ import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
-import twilioClient from "../utils/twilio.js";
 import crypto from "crypto";
-import twilio from "twilio";
-
-console.log("Twilio SID:", process.env.TWILIO_ACCOUNT_SID);
-console.log("Twilio Token:", process.env.TWILIO_AUTH_TOKEN);
-
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-console.log("client:", client);
 
 export const register = catchAsyncError(async (req, res, next) => {
   try {
@@ -107,14 +99,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     const volunteer = await Volunteer.create(volunteerData);
     const verificationCode = await volunteer.generateVerificationCode();
     await volunteer.save();
-    sendVerificationCode(
-      verificationMethod,
-      verificationCode,
-      name,
-      email,
-      phone,
-      res
-    );
+    sendVerificationCode(verificationMethod, verificationCode, name, email, res);
   } catch (error) {
     next(error);
   }
@@ -125,7 +110,6 @@ async function sendVerificationCode(
   verificationCode,
   name,
   email,
-  phone,
   res
 ) {
   try {
@@ -136,24 +120,10 @@ async function sendVerificationCode(
         success: true,
         message: `Verification email successfully sent to ${name}`,
       });
-    } else if (verificationMethod === "phone") {
-      const verificationCodeWithSpace = verificationCode
-        .toString()
-        .split("")
-        .join(" ");
-      await twilioClient.calls.create({
-        twiml: `<Response><Say>Your verification code is ${verificationCodeWithSpace}. Your verification code is ${verificationCodeWithSpace}.</Say></Response>`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: phone,
-      });
-      res.status(200).json({
-        success: true,
-        message: `OTP sent.`,
-      });
     } else {
       return res.status(400).json({
         success: false,
-        message: "Invalid verification method.",
+        message: "Invalid verification method. Only email is supported.",
       });
     }
   } catch (error) {

@@ -3,15 +3,7 @@ import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import { Admin } from "../models/adminModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
-import twilioClient from "../utils/twilio.js";
 import crypto from "crypto";
-import twilio from "twilio";
-
-console.log("Twilio SID:", process.env.TWILIO_ACCOUNT_SID);
-console.log("Twilio Token:", process.env.TWILIO_AUTH_TOKEN);
-
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-console.log("client:", client);
 
 export const register = catchAsyncError(async (req, res, next) => {
   try {
@@ -19,6 +11,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     if (!name || !email || !phone || !password) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
+
     function validatePhoneNumber(phone) {
       const phoneRegex = /^\+91\d{10}$/;
       return phoneRegex.test(phone);
@@ -147,7 +140,6 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Cannot send reset password token.", 500));
   }
 });
-
 
 export const resetPassword = catchAsyncError(async (req, res, next) => {
   const { token } = req.params;

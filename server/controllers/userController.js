@@ -3,15 +3,7 @@ import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import { User } from "../models/userModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
-import twilioClient from "../utils/twilio.js";
 import crypto from "crypto";
-import twilio from "twilio";
-
-console.log("Twilio SID:", process.env.TWILIO_ACCOUNT_SID);
-console.log("Twilio Token:", process.env.TWILIO_AUTH_TOKEN);
-
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-console.log("client:", client);
 
 export const register = catchAsyncError(async (req, res, next) => {
   console.log("Request Body", req.body);
@@ -59,45 +51,18 @@ export const register = catchAsyncError(async (req, res, next) => {
     }
 
     if (!validatePhoneNumber(phone)) {
-      return next(new ErrorHandler("Invalid phone number.", 400));
+      return next(new ErrorHandler("Invalid phone number format.", 400));
     }
 
-    // Check if the email or phone is already used
-    const existingUser = await User.findOne({
-      $or: [
-        { email, accountVerified: true },
-        { phone, accountVerified: true },
-      ],
-    });
+    // Check if email or phone exists separately
+    const emailExists = await User.findOne({ email });
+    const phoneExists = await User.findOne({ phone });
 
-    if (existingUser) {
-      return next(new ErrorHandler("Phone or Email is already used.", 400));
+    if (emailExists || phoneExists) {
+      return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
 
-    // Prevent multiple registration attempts
-    const registrationAttemptsByUser = await User.find({
-      $or: [
-        { phone, accountVerified: false },
-        { email, accountVerified: false },
-      ],
-    });
-
-    if (registrationAttemptsByUser.length > 3) {
-      return next(
-        new ErrorHandler(
-          "You have exceeded the maximum number of attempts (3). Please try again after an hour.",
-          400
-        )
-      );
-    }
-
-    // Check if the email is already registered, even if not verified
-    const existingEmailUser = await User.findOne({ email });
-    if (existingEmailUser) {
-      return next(new ErrorHandler("Email and phone is already used.", 400));
-    }
-
-    // Create user data object
+    // Create new user data
     const userData = {
       name,
       email,
@@ -133,7 +98,7 @@ export const register = catchAsyncError(async (req, res, next) => {
   }
 });
 
-// Function to send verification code via email or phone
+// Function to send verification code via email
 async function sendVerificationCode(
   verificationMethod,
   verificationCode,
@@ -150,24 +115,10 @@ async function sendVerificationCode(
         success: true,
         message: `Verification email successfully sent to ${name}`,
       });
-    } else if (verificationMethod === "phone") {
-      const verificationCodeWithSpace = verificationCode
-        .toString()
-        .split("")
-        .join(" ");
-      await twilioClient.calls.create({
-        twiml: `<Response><Say>Your verification code is ${verificationCodeWithSpace}. Your verification code is ${verificationCodeWithSpace}.</Say></Response>`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: phone,
-      });
-      res.status(200).json({
-        success: true,
-        message: `OTP sent.`,
-      });
     } else {
       return res.status(400).json({
         success: false,
-        message: "Invalid verification method.",
+        message: "Invalid verification method. Only email is supported.",
       });
     }
   } catch (error) {
@@ -264,7 +215,6 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Internal Server Error.", 500));
   }
 });
-
 
 export const login = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
