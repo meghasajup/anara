@@ -4,6 +4,7 @@ import { User } from "../models/userModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
+import { userInfo } from "os";
 
 export const register = catchAsyncError(async (req, res, next) => {
   console.log("Request Body", req.body);
