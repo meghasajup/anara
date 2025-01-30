@@ -14,7 +14,7 @@ const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 console.log("client:", client);
 
 export const register = catchAsyncError(async (req, res, next) => {
-  console.log("hi", req.body);
+  console.log("Request Body", req.body);
 
   try {
     const {
@@ -32,6 +32,8 @@ export const register = catchAsyncError(async (req, res, next) => {
       policeVerification,
       educationQualification,
     } = req.body;
+
+    // Check for missing fields
     if (
       !name ||
       !email ||
@@ -49,6 +51,8 @@ export const register = catchAsyncError(async (req, res, next) => {
     ) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
+
+    // Validate phone number format
     function validatePhoneNumber(phone) {
       const phoneRegex = /^\+91\d{10}$/;
       return phoneRegex.test(phone);
@@ -58,16 +62,11 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Invalid phone number.", 400));
     }
 
+    // Check if the email or phone is already used
     const existingUser = await User.findOne({
       $or: [
-        {
-          email,
-          accountVerified: true,
-        },
-        {
-          phone,
-          accountVerified: true,
-        },
+        { email, accountVerified: true },
+        { phone, accountVerified: true },
       ],
     });
 
@@ -75,14 +74,15 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Phone or Email is already used.", 400));
     }
 
-    const registerationAttemptsByUser = await User.find({
+    // Prevent multiple registration attempts
+    const registrationAttemptsByUser = await User.find({
       $or: [
         { phone, accountVerified: false },
         { email, accountVerified: false },
       ],
     });
 
-    if (registerationAttemptsByUser.length > 3) {
+    if (registrationAttemptsByUser.length > 3) {
       return next(
         new ErrorHandler(
           "You have exceeded the maximum number of attempts (3). Please try again after an hour.",
@@ -91,6 +91,13 @@ export const register = catchAsyncError(async (req, res, next) => {
       );
     }
 
+    // Check if the email is already registered, even if not verified
+    const existingEmailUser = await User.findOne({ email });
+    if (existingEmailUser) {
+      return next(new ErrorHandler("Email and phone is already used.", 400));
+    }
+
+    // Create user data object
     const userData = {
       name,
       email,
@@ -106,9 +113,13 @@ export const register = catchAsyncError(async (req, res, next) => {
       educationQualification,
     };
 
+    // Create new user
     const user = await User.create(userData);
+
+    // Generate verification code and send it
     const verificationCode = await user.generateVerificationCode();
     await user.save();
+
     sendVerificationCode(
       verificationMethod,
       verificationCode,
@@ -122,6 +133,7 @@ export const register = catchAsyncError(async (req, res, next) => {
   }
 });
 
+// Function to send verification code via email or phone
 async function sendVerificationCode(
   verificationMethod,
   verificationCode,
@@ -167,6 +179,7 @@ async function sendVerificationCode(
   }
 }
 
+// Function to generate email template for verification code
 function generateEmailTemplate(verificationCode) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
@@ -203,14 +216,8 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
   try {
     const userAllEntries = await User.find({
       $or: [
-        {
-          email,
-          accountVerified: false,
-        },
-        {
-          phone,
-          accountVerified: false,
-        },
+        { email, accountVerified: false },
+        { phone, accountVerified: false },
       ],
     }).sort({ createdAt: -1 });
 
@@ -240,9 +247,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
 
     const currentTime = Date.now();
 
-    const verificationCodeExpire = new Date(
-      user.verificationCodeExpire
-    ).getTime();
+    const verificationCodeExpire = new Date(user.verificationCodeExpire).getTime();
     console.log(currentTime);
     console.log(verificationCodeExpire);
     if (currentTime > verificationCodeExpire) {
@@ -259,6 +264,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Internal Server Error.", 500));
   }
 });
+
 
 export const login = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;

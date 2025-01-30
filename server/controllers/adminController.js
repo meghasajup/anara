@@ -113,67 +113,81 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
   const admin = await Admin.findOne({
     email: req.body.email,
   });
+
   if (!admin) {
-    return next(new ErrorHandler("admin not found.", 404));
+    return next(new ErrorHandler("Admin not found.", 404));
   }
+
+  // Generate reset password token
   const resetToken = admin.generateResetPasswordToken();
   await admin.save({ validateBeforeSave: false });
+
+  // Create reset password URL
   const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
 
-  const message = `Your Reset Password Token is:- \n\n ${resetPasswordUrl} \n\n If you have not requested this email then please ignore it.`;
+  // Message to be sent to the user
+  const message = `Your Reset Password Token is: \n\n ${resetPasswordUrl} \n\n If you did not request this, please ignore this email.`;
 
   try {
-    sendEmail({
+    // Send email
+    await sendEmail({
       email: admin.email,
-      subject: "MERN AUTHENTICATION APP RESET PASSWORD",
+      subject: "MERN Authentication App - Reset Password",
       message,
     });
+    
     res.status(200).json({
       success: true,
-      message: `Email sent to ${admin.email} successfully.`,
+      message: `Reset password email sent to ${admin.email}.`,
     });
   } catch (error) {
     admin.resetPasswordToken = undefined;
     admin.resetPasswordExpire = undefined;
     await admin.save({ validateBeforeSave: false });
-    return next(
-      new ErrorHandler(
-        error.message ? error.message : "Cannot send reset password token.",
-        500
-      )
-    );
+    return next(new ErrorHandler("Cannot send reset password token.", 500));
   }
 });
 
+
 export const resetPassword = catchAsyncError(async (req, res, next) => {
   const { token } = req.params;
+
+  if (!token) {
+    return next(new ErrorHandler("Token is missing.", 400));
+  }
+
+  // Hash the token from the URL to match with the stored token in the database
   const resetPasswordToken = crypto
     .createHash("sha256")
     .update(token)
     .digest("hex");
+
   const admin = await Admin.findOne({
     resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() },
+    resetPasswordExpire: { $gt: Date.now() }, // Ensure token has not expired
   });
+
   if (!admin) {
-    return next(
-      new ErrorHandler(
-        "Reset password token is invalid or has been expired.",
-        400
-      )
-    );
+    return next(new ErrorHandler("Reset password token is invalid or has expired.", 400));
   }
 
-  if (req.body.password !== req.body.confirmPassword) {
-    return next(
-      new ErrorHandler("Password & confirm password do not match.", 400)
-    );
+  const { password, confirmPassword } = req.body;
+
+  if (!password || !confirmPassword) {
+    return next(new ErrorHandler("Password and confirm password are required.", 400));
   }
 
-  admin.password = req.body.password;
+  if (password !== confirmPassword) {
+    return next(new ErrorHandler("Passwords do not match.", 400));
+  }
+
+  // Update password and remove reset token from database
+  admin.password = password;
   admin.resetPasswordToken = undefined;
   admin.resetPasswordExpire = undefined;
+
   await admin.save();
 
-  sendToken(admin, 200, "Reset Password Successfully.", res);
+  // Send success response and token
+  sendToken(admin, 200, "Password reset successfully.", res);
 });
