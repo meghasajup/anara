@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  regNumber: { type: String, unique: true }, 
 });
 
 userSchema.pre("save", async function (next) {

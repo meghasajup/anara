@@ -93,7 +93,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     const volunteer = await Volunteer.create(volunteerData);
     const verificationCode = await volunteer.generateVerificationCode();
     await volunteer.save();
-    
+
     // Send the verification code via the selected method
     sendVerificationCode(verificationMethod, verificationCode, name, email, res);
   } catch (error) {
@@ -176,14 +176,8 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
 
     const volunteerAllEntries = await Volunteer.find({
       $or: [
-        {
-          email,
-          accountVerified: false,
-        },
-        {
-          phone,
-          accountVerified: false,
-        },
+        { email, accountVerified: false },
+        { phone, accountVerified: false },
       ],
     }).sort({ createdAt: -1 });
 
@@ -202,10 +196,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
       console.log("Cleaning up multiple entries");
       await Volunteer.deleteMany({
         _id: { $ne: volunteer._id },
-        $or: [
-          { phone, accountVerified: false },
-          { email, accountVerified: false },
-        ],
+        $or: [{ phone, accountVerified: false }, { email, accountVerified: false }],
       });
     }
 
@@ -219,9 +210,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     }
 
     const currentTime = Date.now();
-    const verificationCodeExpire = new Date(
-      volunteer.verificationCodeExpire
-    ).getTime();
+    const verificationCodeExpire = new Date(volunteer.verificationCodeExpire).getTime();
 
     console.log("Time comparison:", {
       currentTime,
@@ -233,6 +222,26 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("OTP has expired.", 400));
     }
 
+    // ✅ Generate Registration Number
+    if (!volunteer.regNumber) {
+      const lastVolunteer = await Volunteer.findOne(
+        { regNumber: { $exists: true, $ne: null } },
+        {},
+        { sort: { createdAt: -1 } }
+      );
+
+      let newRegNumber;
+      if (lastVolunteer && lastVolunteer.regNumber) {
+        const lastRegNumber = lastVolunteer.regNumber.split("/").pop(); // Extract number part
+        const nextNumber = String(parseInt(lastRegNumber, 10) + 1).padStart(6, "0");
+        newRegNumber = `T/ASF/FE/${nextNumber}`;
+      } else {
+        newRegNumber = "T/ASF/FE/000001"; // Start fresh if no previous user
+      }
+
+      volunteer.regNumber = newRegNumber;
+    }
+
     volunteer.accountVerified = true;
     volunteer.verificationCode = null;
     volunteer.verificationCodeExpire = null;
@@ -242,6 +251,9 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     const savedVolunteer = await volunteer.save({ validateModifiedOnly: true });
     console.log("Volunteer saved successfully:", savedVolunteer);
 
+    // ✅ Send Registration Number via Email
+    await sendRegNumberEmail(volunteer.name, volunteer.email, volunteer.regNumber)
+
     volunteerToken(volunteer, 200, "Account verified successfully.", res);
   } catch (error) {
     console.error("Detailed error in verifyOTP:", {
@@ -249,11 +261,40 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
       message: error.message,
       stack: error.stack,
     });
-    return next(
-      new ErrorHandler(error.message || "Internal Server Error.", 500)
-    );
+    return next(new ErrorHandler(error.message || "Internal Server Error.", 500));
   }
 });
+async function sendRegNumberEmail(name, email, regNumber) {
+  try {
+    const message = generateRegNumberEmailTemplate(name, regNumber);
+    await sendEmail({ email, subject: "Your Registration Number", message });
+    console.log(`Registration number email sent to ${email}`);
+  } catch (error) {
+    console.error("Error sending registration number email:", error);
+    return { success: false, message: "Temporary Registration Number failed to send." }
+  }
+}
+
+// Function to generate Email Template for Registration Number
+function generateRegNumberEmailTemplate(name, regNumber) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+      <h2 style="color: #4CAF50; text-align: center;">Registration Successful</h2>
+      <p style="font-size: 16px; color: #333;">Dear ${name},</p>
+      <p style="font-size: 16px; color: #333;">Your Temporary Registration has been successfully verified.</p>
+      <div style="text-align: center; margin: 20px 0;">
+        <span style="display: inline-block; font-size: 20px; font-weight: bold; color: #4CAF50; padding: 10px 20px; border: 1px solid #4CAF50; border-radius: 5px; background-color: #e8f5e9;">
+          Temporary Registration Number: ${regNumber}
+        </span>
+      </div>
+      <p style="font-size: 16px; color: #333;">Please keep this number for future reference.</p>
+      <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #999;">
+        <p>Thank you,<br>Your Company Team</p>
+        <p style="font-size: 12px; color: #aaa;">This is an automated message. Please do not reply to this email.</p>
+      </footer>
+    </div>
+  `;
+}
 
 export const login = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
