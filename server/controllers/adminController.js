@@ -2,7 +2,7 @@ import ErrorHandler from "../middlewares/error.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import { Admin } from "../models/adminModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
-import { sendToken } from "../utils/sendToken.js";
+import { adminToken } from "../utils/adminToken.js";
 import crypto from "crypto";
 
 export const register = catchAsyncError(async (req, res, next) => {
@@ -78,7 +78,7 @@ export const login = catchAsyncError(async (req, res, next) => {
   if (!isPasswordMatched) {
     return next(new ErrorHandler("Invalid email or password.", 400));
   }
-  sendToken(admin, 200, "admin logged in successfully.", res);
+  adminToken(admin, 200, "admin logged in successfully.", res);
 });
 
 export const logout = catchAsyncError(async (req, res, next) => {
@@ -181,5 +181,5 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   await admin.save();
 
   // Send success response and token
-  sendToken(admin, 200, "Password reset successfully.", res);
+  adminToken(admin, 200, "Password reset successfully.", res);
 });

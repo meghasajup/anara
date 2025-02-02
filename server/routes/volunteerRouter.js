@@ -8,15 +8,15 @@ import {
   forgotPassword,
   resetPassword,
 } from "../controllers/volunteerController.js";
-import { isAuthenticated } from "../middlewares/auth.js";
+import { isVolunteerAuthenticated } from "../middlewares/authVolunteer.js";
 
 const router = express.Router();
 
 router.post("/register", register); // register a new volunteer
 router.post("/otp-verification", verifyOTP); // verify OTP
 router.post("/login", login); // login a volunteer
-router.get("/logout", isAuthenticated, logout); // logout a volunteer
-router.get("/me", isAuthenticated, getvolunteer);
+router.get("/logout", isVolunteerAuthenticated, logout); // logout a volunteer
+router.get("/me", isVolunteerAuthenticated, getvolunteer);
 router.post("/password/forgot", forgotPassword);
 router.put("/password/reset/:token", resetPassword);
 

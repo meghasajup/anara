@@ -2,7 +2,7 @@ import ErrorHandler from "../middlewares/error.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
-import { sendToken } from "../utils/sendToken.js";
+import { volunteerToken } from "../utils/volunteerToken.js";
 import crypto from "crypto";
 
 export const register = catchAsyncError(async (req, res, next) => {
@@ -242,7 +242,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     const savedVolunteer = await volunteer.save({ validateModifiedOnly: true });
     console.log("Volunteer saved successfully:", savedVolunteer);
 
-    sendToken(volunteer, 200, "Account verified successfully.", res);
+    volunteerToken(volunteer, 200, "Account verified successfully.", res);
   } catch (error) {
     console.error("Detailed error in verifyOTP:", {
       name: error.name,
@@ -271,7 +271,7 @@ export const login = catchAsyncError(async (req, res, next) => {
   if (!isPasswordMatched) {
     return next(new ErrorHandler("Invalid email or password.", 400));
   }
-  sendToken(volunteer, 200, "volunteer logged in successfully.", res);
+  volunteerToken(volunteer, 200, "volunteer logged in successfully.", res);
 });
 
 export const logout = catchAsyncError(async (req, res, next) => {
@@ -362,5 +362,5 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   volunteer.resetPasswordExpire = undefined;
   await Volunteer.save();
 
-  sendToken(volunteer, 200, "Reset Password Successfully.", res);
+  volunteerToken(volunteer, 200, "Reset Password Successfully.", res);
 });
