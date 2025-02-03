@@ -4,6 +4,7 @@ import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { volunteerToken } from "../utils/volunteerToken.js";
 import crypto from "crypto";
+import fs from "fs";
 
 export const register = catchAsyncError(async (req, res, next) => {
   try {
@@ -30,12 +31,14 @@ export const register = catchAsyncError(async (req, res, next) => {
       !dob ||
       !gender
     ) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("Invalid email address.", 400));
     }
 
@@ -46,29 +49,27 @@ export const register = catchAsyncError(async (req, res, next) => {
     }
 
     if (!validatePhoneNumber(phone)) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("Invalid phone number.", 400));
     }
 
     // Check if both email and phone are used together before
     const existingVolunteer = await Volunteer.findOne({
-      $or: [
-        { email, phone, accountVerified: true }, // Check for both email and phone
-      ],
+      $or: [{ email, phone, accountVerified: true }],
     });
 
     if (existingVolunteer) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("This email and phone is already used.", 400));
     }
 
     // Check if the email alone or phone alone is already registered but not verified
     const existingEmailPhone = await Volunteer.findOne({
-      $or: [
-        { email, accountVerified: false },
-        { phone, accountVerified: false },
-      ],
+      $or: [{ email, accountVerified: false }, { phone, accountVerified: false }],
     });
 
     if (existingEmailPhone) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("Email or phone already exists. Use a different one.", 400));
     }
 
@@ -78,6 +79,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     const requiredFiles = ["image", "undertaking", "policeVerification", "educationQualification"];
     for (const file of requiredFiles) {
       if (!req.files?.[file]?.length) {
+        cleanupUploadedFiles(req.files);
         return next(new ErrorHandler(`${file} is required.`, 400));
       }
     }
@@ -105,9 +107,22 @@ export const register = catchAsyncError(async (req, res, next) => {
     // Send the verification code via the selected method
     sendVerificationCode(verificationMethod, verificationCode, name, email, res);
   } catch (error) {
+    cleanupUploadedFiles(req.files);
     next(error);
   }
 });
+
+// Function to clean up uploaded files if an error occurs
+function cleanupUploadedFiles(files) {
+  if (!files) return;
+  Object.values(files).forEach((fileArray) => {
+    fileArray.forEach((file) => {
+      fs.unlink(file.path, (err) => {
+        if (err) console.error(`Error deleting file: ${file.path}`, err);
+      });
+    });
+  });
+}
 
 async function sendVerificationCode(
   verificationMethod,
