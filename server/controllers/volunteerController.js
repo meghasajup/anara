@@ -17,10 +17,6 @@ export const register = catchAsyncError(async (req, res, next) => {
       address,
       dob,
       gender,
-      image,
-      undertaking,
-      policeVerification,
-      educationQualification,
     } = req.body;
 
     if (
@@ -32,13 +28,15 @@ export const register = catchAsyncError(async (req, res, next) => {
       !guardian ||
       !address ||
       !dob ||
-      !gender ||
-      !image ||
-      !undertaking ||
-      !policeVerification ||
-      !educationQualification
+      !gender
     ) {
       return next(new ErrorHandler("All fields are required.", 400));
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return next(new ErrorHandler("Invalid email address.", 400));
     }
 
     // Validate phone number format
@@ -59,7 +57,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     });
 
     if (existingVolunteer) {
-      return next(new ErrorHandler("This email and phone combination is already used.", 400));
+      return next(new ErrorHandler("This email and phone is already used.", 400));
     }
 
     // Check if the email alone or phone alone is already registered but not verified
@@ -74,6 +72,16 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Email or phone already exists. Use a different one.", 400));
     }
 
+    console.log(req.file);
+    console.log(req.files);
+
+    const requiredFiles = ["image", "undertaking", "policeVerification", "educationQualification"];
+    for (const file of requiredFiles) {
+      if (!req.files?.[file]?.length) {
+        return next(new ErrorHandler(`${file} is required.`, 400));
+      }
+    }
+
     // Create volunteer data and registration
     const volunteerData = {
       name,
@@ -84,10 +92,10 @@ export const register = catchAsyncError(async (req, res, next) => {
       address,
       dob,
       gender,
-      image,
-      undertaking,
-      policeVerification,
-      educationQualification,
+      image: req.files["image"]?.[0]?.path || "",
+      undertaking: req.files["undertaking"]?.[0]?.path || "",
+      policeVerification: req.files["policeVerification"]?.[0]?.path || "",
+      educationQualification: req.files["educationQualification"]?.[0]?.path || "",
     };
 
     const volunteer = await Volunteer.create(volunteerData);
@@ -100,8 +108,6 @@ export const register = catchAsyncError(async (req, res, next) => {
     next(error);
   }
 });
-
-
 
 async function sendVerificationCode(
   verificationMethod,
@@ -222,7 +228,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("OTP has expired.", 400));
     }
 
-    // ✅ Generate Registration Number
+    // Generate Registration Number
     if (!volunteer.regNumber) {
       const lastVolunteer = await Volunteer.findOne(
         { regNumber: { $exists: true, $ne: null } },
@@ -251,8 +257,8 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     const savedVolunteer = await volunteer.save({ validateModifiedOnly: true });
     console.log("Volunteer saved successfully:", savedVolunteer);
 
-    // ✅ Send Registration Number via Email
-    await sendRegNumberEmail(volunteer.name, volunteer.email, volunteer.regNumber)
+    // Send Registration Number via Email
+    await sendRegNumberEmail(volunteer.name, volunteer.email, volunteer.regNumber);
 
     volunteerToken(volunteer, 200, "Account verified successfully.", res);
   } catch (error) {
@@ -264,6 +270,7 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler(error.message || "Internal Server Error.", 500));
   }
 });
+
 async function sendRegNumberEmail(name, email, regNumber) {
   try {
     const message = generateRegNumberEmailTemplate(name, regNumber);
@@ -271,11 +278,10 @@ async function sendRegNumberEmail(name, email, regNumber) {
     console.log(`Registration number email sent to ${email}`);
   } catch (error) {
     console.error("Error sending registration number email:", error);
-    return { success: false, message: "Temporary Registration Number failed to send." }
+    return { success: false, message: "Temporary Registration Number failed to send." };
   }
 }
 
-// Function to generate Email Template for Registration Number
 function generateRegNumberEmailTemplate(name, regNumber) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">

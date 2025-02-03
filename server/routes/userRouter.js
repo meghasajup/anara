@@ -9,10 +9,16 @@ import {
   resetPassword,
 } from "../controllers/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
+import { upload } from "../multer/upload.js";
 
 const router = express.Router();
 
-router.post("/register", register); // register user
+router.post("/register", upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "undertaking", maxCount: 1 },
+  { name: "policeVerification", maxCount: 1 },
+  { name: "educationQualification", maxCount: 1 },
+]), register); //register
 router.post("/otp-verification", verifyOTP); // verify OTP
 router.post("/login", login); // login user
 router.get("/logout", isAuthenticated, logout); // logout user

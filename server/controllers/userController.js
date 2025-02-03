@@ -4,7 +4,6 @@ import { User } from "../models/userModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
-import { userInfo } from "os";
 
 export const register = catchAsyncError(async (req, res, next) => {
   console.log("Request Body", req.body);
@@ -20,10 +19,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       address,
       dob,
       gender,
-      image,
-      undertaking,
-      policeVerification,
-      educationQualification,
+     
     } = req.body;
 
     // Check for missing fields
@@ -36,11 +32,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       !guardian ||
       !address ||
       !dob ||
-      !gender ||
-      !image ||
-      !undertaking ||
-      !policeVerification ||
-      !educationQualification
+      !gender
     ) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
@@ -63,6 +55,19 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
 
+    const validateFile = (file, fieldName) => {
+      if (!file || !file.length) {
+        throw (new ErrorHandler(`${fieldName} file is required.`, 400))
+      }
+    }
+
+
+
+
+    const image = validateFile(req.files["image"], "Image");
+    const undertaking = validateFile(req.files["undertaking"], "Undertaking");
+    const policeVerification = validateFile(req.files["policeVerification"], "Police Verification");
+    const educationQualification = validateFile(req.files["educationQualification"], "Education Qualification");
     // Create new user data
     const userData = {
       name,
@@ -78,6 +83,9 @@ export const register = catchAsyncError(async (req, res, next) => {
       policeVerification,
       educationQualification,
     };
+
+   
+
 
     // Create new user
     const user = await User.create(userData);
