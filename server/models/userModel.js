@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
   undertaking: String,
   policeVerification: String,
   educationQualification: String,
-  bankDocument: String,
   email: String,
   password: {
     type: String,

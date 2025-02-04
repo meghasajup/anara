@@ -72,7 +72,6 @@ export const register = catchAsyncError(async (req, res, next) => {
     const undertaking = validateFile(req.files["undertaking"], "Undertaking");
     const policeVerification = validateFile(req.files["policeVerification"], "Police Verification");
     const educationQualification = validateFile(req.files["educationQualification"], "Education Qualification");
-    const bankDocument = validateFile(req.files["bankDocument"], "Bank Document")
 
     // Create new user data
     const userData = {
@@ -88,7 +87,6 @@ export const register = catchAsyncError(async (req, res, next) => {
       undertaking,
       policeVerification,
       educationQualification,
-      bankDocument,
     };
 
     // Create new user
