@@ -18,6 +18,7 @@ router.post("/register", upload.fields([
   { name: "undertaking", maxCount: 1 },
   { name: "policeVerification", maxCount: 1 },
   { name: "educationQualification", maxCount: 1 },
+  { name: "bankDocument", maxCount: 1 },
 ]), register); //register
 router.post("/otp-verification", verifyOTP); // verify OTP
 router.post("/login", login); // login user

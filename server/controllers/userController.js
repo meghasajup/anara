@@ -4,6 +4,7 @@ import { User } from "../models/userModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
+import fs from "fs";
 
 export const register = catchAsyncError(async (req, res, next) => {
   console.log("Request Body", req.body);
@@ -19,7 +20,6 @@ export const register = catchAsyncError(async (req, res, next) => {
       address,
       dob,
       gender,
-     
     } = req.body;
 
     // Check for missing fields
@@ -34,6 +34,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       !dob ||
       !gender
     ) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
@@ -44,6 +45,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     }
 
     if (!validatePhoneNumber(phone)) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("Invalid phone number format.", 400));
     }
 
@@ -52,22 +54,26 @@ export const register = catchAsyncError(async (req, res, next) => {
     const phoneExists = await User.findOne({ phone });
 
     if (emailExists || phoneExists) {
+      cleanupUploadedFiles(req.files);
       return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
 
+    // File validation function
     const validateFile = (file, fieldName) => {
       if (!file || !file.length) {
-        throw (new ErrorHandler(`${fieldName} file is required.`, 400))
+        cleanupUploadedFiles(req.files);
+        throw new ErrorHandler(`${fieldName} file is required.`, 400);
       }
-    }
+      return file[0].path;
+    };
 
-
-
-
+    // Validate and get file paths
     const image = validateFile(req.files["image"], "Image");
     const undertaking = validateFile(req.files["undertaking"], "Undertaking");
     const policeVerification = validateFile(req.files["policeVerification"], "Police Verification");
     const educationQualification = validateFile(req.files["educationQualification"], "Education Qualification");
+    const bankDocument = validateFile(req.files["bankDocument"], "Bank Document")
+
     // Create new user data
     const userData = {
       name,
@@ -82,10 +88,8 @@ export const register = catchAsyncError(async (req, res, next) => {
       undertaking,
       policeVerification,
       educationQualification,
+      bankDocument,
     };
-
-   
-
 
     // Create new user
     const user = await User.create(userData);
@@ -103,9 +107,22 @@ export const register = catchAsyncError(async (req, res, next) => {
       res
     );
   } catch (error) {
+    cleanupUploadedFiles(req.files);
     next(error);
   }
 });
+
+// Function to clean up uploaded files if an error occurs
+function cleanupUploadedFiles(files) {
+  if (!files) return;
+  Object.values(files).forEach((fileArray) => {
+    fileArray.forEach((file) => {
+      fs.unlink(file.path, (err) => {
+        if (err) console.error(`Error deleting file: ${file.path}`, err);
+      });
+    });
+  });
+}
 
 // Function to send verification code via email
 async function sendVerificationCode(

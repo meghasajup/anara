@@ -76,7 +76,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     console.log(req.file);
     console.log(req.files);
 
-    const requiredFiles = ["image", "undertaking", "policeVerification", "educationQualification"];
+    const requiredFiles = ["image", "undertaking", "policeVerification", "educationQualification", "bankDocument"];
     for (const file of requiredFiles) {
       if (!req.files?.[file]?.length) {
         cleanupUploadedFiles(req.files);
@@ -98,6 +98,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       undertaking: req.files["undertaking"]?.[0]?.path || "",
       policeVerification: req.files["policeVerification"]?.[0]?.path || "",
       educationQualification: req.files["educationQualification"]?.[0]?.path || "",
+      bankDocument: req.files["bankDocument"]?.[0]?.path || "",
     };
 
     const volunteer = await Volunteer.create(volunteerData);
