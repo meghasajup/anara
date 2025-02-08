@@ -218,7 +218,7 @@ export const register = catchAsyncError(async (req, res, next) => {
 
       const mailOptions = {
         from: "hasanulbanna2255@gmail.com",
-        to: "abhinraj8086@gmail.com",
+        to: "meghasajup94.com",
         subject: "Action Required: Account Approval",
         html: `
       <h3>Dear Officer,</h3>

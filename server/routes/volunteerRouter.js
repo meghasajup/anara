@@ -1,51 +1,45 @@
 import express from "express";
 import {
-  sendEmailOTP,
-  verifyOTP,
-  generateTemporaryRegNumber,
   register,
+  sendEmailOTP,
+  verifyEmailOTP,
   login,
   logout,
-  getvolunteer,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  generateTemporaryRegNumber,
+  approveEmail,
+  getVolunteer,
 } from "../controllers/volunteerController.js";
 import { isVolunteerAuthenticated } from "../middlewares/authVolunteer.js";
 import { upload } from "../multer/upload.js";
 
 const router = express.Router();
 
-// Route for sending OTP for email verification
-router.post("/send-email-otp", sendEmailOTP);
+router.post("/send-email-otp", sendEmailOTP); //OTP for email verification
 
-// Route for verifying email OTP
-router.post("/otp-verification", verifyOTP);
+router.post("/verify-email-otp", verifyEmailOTP); //Verify OTP for email verification
 
-//Route for temporary registration number
-router.post("/generate-temp-reg", generateTemporaryRegNumber);
+router.post("/generate-temp-reg", generateTemporaryRegNumber); //Generate temporary registration number
 
-// Route for user registration
+router.get('/approve', approveEmail) //Approve email
+
 router.post("/register", upload.fields([
   { name: "image", maxCount: 1 },
   { name: "undertaking", maxCount: 1 },
   { name: "policeVerification", maxCount: 1 },
   { name: "educationQualification", maxCount: 1 },
   { name: "bankDocument", maxCount: 1 },
-]), register);
+]), register); //Register user with image upload
 
-// Route for user login
-router.post("/login", login);
+router.post("/login", login); //Login user
 
-// Route for user logout
-router.get("/logout", isVolunteerAuthenticated, logout);
+router.get("/logout", isVolunteerAuthenticated, logout); //Logout user
 
-// Route for getting user information
-router.get("/me", isVolunteerAuthenticated, getvolunteer);
+router.get("/me", isVolunteerAuthenticated, getVolunteer); //Get user information
 
-// Route for forgot password
-router.post("/password/forgot", forgotPassword);
+router.post("/forgot-password", forgotPassword); //Forgot password
 
-// Route for resetting password
-router.put("/password/reset/:token", resetPassword);
+router.put("/reset-password/:token", resetPassword); //Reset password with token
 
 export default router;

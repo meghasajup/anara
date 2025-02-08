@@ -31,9 +31,8 @@ const volunteerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  tempRegNumber: { type: String, 
-    unique: true,
-    required: true, } 
+  temp: { type: String, unique: true },  
+  tempRegNumber: { type: String }
 });
 
 volunteerSchema.pre("save", async function (next) {
