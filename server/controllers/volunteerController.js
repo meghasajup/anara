@@ -4,426 +4,269 @@ import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { volunteerToken } from "../utils/volunteerToken.js";
 import crypto from "crypto";
-import fs from "fs";
 
-export const register = catchAsyncError(async (req, res, next) => {
+const otpStore = new Map();
+
+// Send email OTP
+export const sendEmailOTP = catchAsyncError(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new ErrorHandler("Email is required.", 400));
+  }
+
+  const volunteer = await Volunteer.findOne({ email });
+  if (volunteer) {
+    return next(new ErrorHandler("Email is already registered.", 400));
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
+  const otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
+
+  otpStore.set(email, { otp, otpExpire });
+
   try {
-    const {
-      name,
-      email,
-      phone,
-      password,
-      verificationMethod,
-      guardian,
-      address,
-      dob,
-      gender,
-    } = req.body;
-
-    if (
-      !name ||
-      !email ||
-      !phone ||
-      !password ||
-      !verificationMethod ||
-      !guardian ||
-      !address ||
-      !dob ||
-      !gender
-    ) {
-      cleanupUploadedFiles(req.files);
-      return next(new ErrorHandler("All fields are required.", 400));
-    }
-
-    // Validate email format
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      cleanupUploadedFiles(req.files);
-      return next(new ErrorHandler("Invalid email address.", 400));
-    }
-
-    // Validate phone number format
-    function validatePhoneNumber(phone) {
-      const phoneRegex = /^\+91\d{10}$/;
-      return phoneRegex.test(phone);
-    }
-
-    if (!validatePhoneNumber(phone)) {
-      cleanupUploadedFiles(req.files);
-      return next(new ErrorHandler("Invalid phone number.", 400));
-    }
-
-    // Check if both email and phone are used together before
-    const existingVolunteer = await Volunteer.findOne({
-      $or: [{ email, phone, accountVerified: true }],
-    });
-
-    if (existingVolunteer) {
-      cleanupUploadedFiles(req.files);
-      return next(new ErrorHandler("This email and phone is already used.", 400));
-    }
-
-    // Check if the email alone or phone alone is already registered but not verified
-    const existingEmailPhone = await Volunteer.findOne({
-      $or: [{ email, accountVerified: false }, { phone, accountVerified: false }],
-    });
-
-    if (existingEmailPhone) {
-      cleanupUploadedFiles(req.files);
-      return next(new ErrorHandler("Email or phone already exists. Use a different one.", 400));
-    }
-
-    console.log(req.file);
-    console.log(req.files);
-
-    const requiredFiles = ["image", "undertaking", "policeVerification", "educationQualification", "bankDocument"];
-    for (const file of requiredFiles) {
-      if (!req.files?.[file]?.length) {
-        cleanupUploadedFiles(req.files);
-        return next(new ErrorHandler(`${file} is required.`, 400));
-      }
-    }
-
-    // Create volunteer data and registration
-    const volunteerData = {
-      name,
-      email,
-      phone,
-      password,
-      guardian,
-      address,
-      dob,
-      gender,
-      image: req.files["image"]?.[0]?.path || "",
-      undertaking: req.files["undertaking"]?.[0]?.path || "",
-      policeVerification: req.files["policeVerification"]?.[0]?.path || "",
-      educationQualification: req.files["educationQualification"]?.[0]?.path || "",
-      bankDocument: req.files["bankDocument"]?.[0]?.path || "",
-    };
-
-    const volunteer = await Volunteer.create(volunteerData);
-    const verificationCode = await volunteer.generateVerificationCode();
-    await volunteer.save();
-
-    // Send the verification code via the selected method
-    sendVerificationCode(verificationMethod, verificationCode, name, email, res);
+    const message = `
+      <div style='font-family: Arial, sans-serif;'>
+        <h1>Your OTP for Email Verification</h1>
+        <p>Please use the following OTP to verify your email:</p>
+        <h2>${otp}</h2>
+        <p>This code is valid for 5 minutes.</p>
+      </div>
+    `;
+    await sendEmail({ email, subject: "Email Verification OTP", message });
+    res.status(200).json({ success: true, message: "OTP sent successfully." });
   } catch (error) {
-    cleanupUploadedFiles(req.files);
-    next(error);
+    return next(new ErrorHandler("Failed to send OTP.", 500));
   }
 });
 
-// Function to clean up uploaded files if an error occurs
-function cleanupUploadedFiles(files) {
-  if (!files) return;
-  Object.values(files).forEach((fileArray) => {
-    fileArray.forEach((file) => {
-      fs.unlink(file.path, (err) => {
-        if (err) console.error(`Error deleting file: ${file.path}`, err);
-      });
-    });
-  });
-}
-
-async function sendVerificationCode(
-  verificationMethod,
-  verificationCode,
-  name,
-  email,
-  res
-) {
-  try {
-    if (verificationMethod === "email") {
-      const message = generateEmailTemplate(verificationCode);
-      await sendEmail({ email, subject: "Your Verification Code", message });
-      res.status(200).json({
-        success: true,
-        message: `Verification email successfully sent to ${name}`,
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid verification method. Only email is supported.",
-      });
-    }
-  } catch (error) {
-    console.error("Error sending verification code:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Verification code failed to send.",
-    });
-  }
-}
-
-function generateEmailTemplate(verificationCode) {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
-      <h2 style="color: #4CAF50; text-align: center;">Verification Code</h2>
-      <p style="font-size: 16px; color: #333;">Dear volunteer,</p>
-      <p style="font-size: 16px; color: #333;">Your verification code is:</p>
-      <div style="text-align: center; margin: 20px 0;">
-        <span style="display: inline-block; font-size: 24px; font-weight: bold; color: #4CAF50; padding: 10px 20px; border: 1px solid #4CAF50; border-radius: 5px; background-color: #e8f5e9;">
-          ${verificationCode}
-        </span>
-      </div>
-      <p style="font-size: 16px; color: #333;">Please use this code to verify your email address. The code will expire in 10 minutes.</p>
-      <p style="font-size: 16px; color: #333;">If you did not request this, please ignore this email.</p>
-      <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #999;">
-        <p>Thank you,<br>Your Company Team</p>
-        <p style="font-size: 12px; color: #aaa;">This is an automated message. Please do not reply to this email.</p>
-      </footer>
-    </div>
-  `;
-}
-
+// Verify OTP
 export const verifyOTP = catchAsyncError(async (req, res, next) => {
-  try {
-    console.log("Request body:", req.body);
-    const { email, otp, phone } = req.body;
+  const { email, otp } = req.body;
 
-    if (!email || !otp || !phone) {
-      console.log("Missing required fields:", { email, otp, phone });
-      return next(new ErrorHandler("All fields are required.", 400));
-    }
-
-    function validatePhoneNumber(phone) {
-      const phoneRegex = /^\+91\d{10}$/;
-      return phoneRegex.test(phone);
-    }
-
-    if (!validatePhoneNumber(phone)) {
-      console.log("Invalid phone number:", phone);
-      return next(new ErrorHandler("Invalid phone number.", 400));
-    }
-
-    const volunteerAllEntries = await Volunteer.find({
-      $or: [
-        { email, accountVerified: false },
-        { phone, accountVerified: false },
-      ],
-    }).sort({ createdAt: -1 });
-
-    console.log("Found volunteer entries:", volunteerAllEntries);
-
-    if (!volunteerAllEntries || volunteerAllEntries.length === 0) {
-      console.log("No volunteer entries found");
-      return next(new ErrorHandler("No pending verification found.", 404));
-    }
-
-    let volunteer = volunteerAllEntries[0];
-    console.log("Selected volunteer:", volunteer);
-
-    // Clean up other pending entries if they exist
-    if (volunteerAllEntries.length > 1) {
-      console.log("Cleaning up multiple entries");
-      await Volunteer.deleteMany({
-        _id: { $ne: volunteer._id },
-        $or: [{ phone, accountVerified: false }, { email, accountVerified: false }],
-      });
-    }
-
-    console.log("Verification code comparison:", {
-      provided: Number(otp),
-      stored: volunteer.verificationCode,
-    });
-
-    if (volunteer.verificationCode !== Number(otp)) {
-      return next(new ErrorHandler("Invalid OTP.", 400));
-    }
-
-    const currentTime = Date.now();
-    const verificationCodeExpire = new Date(volunteer.verificationCodeExpire).getTime();
-
-    console.log("Time comparison:", {
-      currentTime,
-      verificationCodeExpire,
-      isExpired: currentTime > verificationCodeExpire,
-    });
-
-    if (currentTime > verificationCodeExpire) {
-      return next(new ErrorHandler("OTP has expired.", 400));
-    }
-
-    // Generate Registration Number
-    if (!volunteer.regNumber) {
-      const lastVolunteer = await Volunteer.findOne(
-        { regNumber: { $exists: true, $ne: null } },
-        {},
-        { sort: { createdAt: -1 } }
-      );
-
-      let newRegNumber;
-      if (lastVolunteer && lastVolunteer.regNumber) {
-        const lastRegNumber = lastVolunteer.regNumber.split("/").pop(); // Extract number part
-        const nextNumber = String(parseInt(lastRegNumber, 10) + 1).padStart(6, "0");
-        newRegNumber = `T/ASF/FE/${nextNumber}`;
-      } else {
-        newRegNumber = "T/ASF/FE/000001"; // Start fresh if no previous user
-      }
-
-      volunteer.regNumber = newRegNumber;
-    }
-
-    volunteer.accountVerified = true;
-    volunteer.verificationCode = null;
-    volunteer.verificationCodeExpire = null;
-
-    console.log("About to save volunteer:", volunteer);
-
-    const savedVolunteer = await volunteer.save({ validateModifiedOnly: true });
-    console.log("Volunteer saved successfully:", savedVolunteer);
-
-    // Send Registration Number via Email
-    await sendRegNumberEmail(volunteer.name, volunteer.email, volunteer.regNumber);
-
-    volunteerToken(volunteer, 200, "Account verified successfully.", res);
-  } catch (error) {
-    console.error("Detailed error in verifyOTP:", {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
-    return next(new ErrorHandler(error.message || "Internal Server Error.", 500));
+  if (!email || !otp) {
+    return next(new ErrorHandler("Email and OTP are required.", 400));
   }
+
+  const storedOtpData = otpStore.get(email);
+
+  if (!storedOtpData) {
+    return next(new ErrorHandler("OTP not found or expired.", 400));
+  }
+
+  const { otp: storedOtp, otpExpire } = storedOtpData;
+
+  if (Date.now() > otpExpire) {
+    otpStore.delete(email);
+    return next(new ErrorHandler("OTP Expired.", 400));
+  }
+
+  if (parseInt(otp) !== storedOtp) {
+    return next(new ErrorHandler("Invalid OTP.", 400));
+  }
+
+  otpStore.set(email, { verified: true });
+
+  res.status(200).json({ success: true, message: "Email verified successfully." });
 });
 
-async function sendRegNumberEmail(name, email, regNumber) {
-  try {
-    const message = generateRegNumberEmailTemplate(name, regNumber);
-    await sendEmail({ email, subject: "Your Registration Number", message });
-    console.log(`Registration number email sent to ${email}`);
-  } catch (error) {
-    console.error("Error sending registration number email:", error);
-    return { success: false, message: "Temporary Registration Number failed to send." };
-  }
-}
+// Generate Temporary Registration Number
+// Generate Temporary Registration Number
+export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next) => {
+  const { email } = req.body;
 
-function generateRegNumberEmailTemplate(name, regNumber) {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
-      <h2 style="color: #4CAF50; text-align: center;">Registration Successful</h2>
-      <p style="font-size: 16px; color: #333;">Dear ${name},</p>
-      <p style="font-size: 16px; color: #333;">Your Temporary Registration has been successfully verified.</p>
-      <div style="text-align: center; margin: 20px 0;">
-        <span style="display: inline-block; font-size: 20px; font-weight: bold; color: #4CAF50; padding: 10px 20px; border: 1px solid #4CAF50; border-radius: 5px; background-color: #e8f5e9;">
-          Temporary Registration Number: ${regNumber}
-        </span>
-      </div>
-      <p style="font-size: 16px; color: #333;">Please keep this number for future reference.</p>
-      <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #999;">
-        <p>Thank you,<br>Your Company Team</p>
-        <p style="font-size: 12px; color: #aaa;">This is an automated message. Please do not reply to this email.</p>
-      </footer>
+  if (!email) {
+    return next(new ErrorHandler("Email is required.", 400));
+  }
+
+  const storedOtpData = otpStore.get(email);
+
+  if (!storedOtpData || !storedOtpData.verified) {
+    return next(new ErrorHandler("Email not verified. Please verify your email first.", 400));
+  }
+
+  let tempRegNumber;
+  let isUnique = false;
+
+  // Generate a unique Temporary Registration Number
+  while (!isUnique) {
+    const volunteerCount = await Volunteer.countDocuments();
+    const nextNumber = volunteerCount + 1;
+    tempRegNumber = `T/ASF/FE/${String(nextNumber).padStart(5, '0')}`;
+
+    const existingVolunteer = await Volunteer.findOne({ tempRegNumber });
+    isUnique = !existingVolunteer;
+  }
+
+  otpStore.set(email, { ...storedOtpData, tempRegNumber });
+
+  const message = `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Temporary Registration Number</h2>
+      <p>Your Temporary Registration Number is:</p>
+      <h2>${tempRegNumber}</h2>
+      <p>Use this number for further verification.</p>
     </div>
   `;
-}
 
-export const login = catchAsyncError(async (req, res, next) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return next(new ErrorHandler("Email and password are required.", 400));
+  try {
+    await sendEmail({ email, subject: "Temporary Registration Number", message });
+    res.status(200).json({ success: true, message: "Temporary Registration Number assigned successfully.", tempRegNumber });
+  } catch (error) {
+    return next(new ErrorHandler("Failed to send Temporary Registration Number.", 500));
   }
-  const volunteer = await Volunteer.findOne({
+});
+
+
+
+// Register
+export const register = catchAsyncError(async (req, res, next) => {
+  const { name, email, phone, password, guardian, address, dob, gender } = req.body;
+
+  if (!name || !email || !phone || !password || !guardian || !address || !dob || !gender) {
+    return next(new ErrorHandler("All fields are required.", 400));
+  }
+
+  if (!req.files || !req.files.image || !req.files.undertaking || !req.files.policeVerification || !req.files.educationQualification || !req.files.bankDocument) {
+    return next(new ErrorHandler("All required documents must be uploaded.", 400));
+  }
+
+  const emailExists = await Volunteer.findOne({ email });
+  const phoneExists = await Volunteer.findOne({ phone });
+
+  if (emailExists || phoneExists) {
+    return next(new ErrorHandler("Email or phone is already registered.", 400));
+  }
+
+  const storedOtpData = otpStore.get(email);
+
+  if (!storedOtpData) {
+    return next(new ErrorHandler("Email verification incomplete. Please complete OTP verification.", 400));
+  }
+
+  if (!storedOtpData.tempRegNumber) {
+    return next(new ErrorHandler("Temporary Registration Number not generated. Please generate it before registration.", 400));
+  }
+
+  // Ensure unique tempRegNumber
+  const tempRegNumberExists = await Volunteer.findOne({ tempRegNumber: storedOtpData.tempRegNumber });
+  if (tempRegNumberExists) {
+    otpStore.delete(email);
+    return next(new ErrorHandler("Duplicate regNumber detected. Please try again.", 400));
+  }
+
+  const volunteer = await Volunteer.create({
+    name,
     email,
+    phone,
+    password,
+    guardian,
+    address,
+    dob,
+    gender,
+    image: req.files.image[0].path,
+    undertaking: req.files.undertaking[0].path,
+    policeVerification: req.files.policeVerification[0].path,
+    educationQualification: req.files.educationQualification[0].path,
+    bankDocument: req.files.bankDocument[0].path,
     accountVerified: true,
-  }).select("+password");
-  if (!volunteer) {
-    return next(new ErrorHandler("Invalid email or password.", 400));
-  }
-  const isPasswordMatched = await volunteer.comparePassword(password);
-  if (!isPasswordMatched) {
-    return next(new ErrorHandler("Invalid email or password.", 400));
-  }
-  volunteerToken(volunteer, 200, "volunteer logged in successfully.", res);
-});
+    tempRegNumber: storedOtpData.tempRegNumber,
+  });
 
-export const logout = catchAsyncError(async (req, res, next) => {
-  res
-    .status(200)
-    .cookie("token", "", {
-      expires: new Date(Date.now()),
-      httpOnly: true,
-    })
-    .json({
-      success: true,
-      message: "Logged out successfully.",
-    });
-});
+  otpStore.delete(email);
 
-export const getvolunteer = catchAsyncError(async (req, res, next) => {
-  const volunteer = req.volunteer;
-  res.status(200).json({
+  res.status(201).json({
     success: true,
+    message: "Volunteer registered successfully.",
     volunteer,
   });
 });
 
+
+
+// Login
+export const login = catchAsyncError(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return next(new ErrorHandler("Email and password are required.", 400));
+  }
+
+  const volunteer = await Volunteer.findOne({ email }).select("+password");
+
+  if (!volunteer || !volunteer.accountVerified) {
+    return next(new ErrorHandler("Account not verified. Please verify your email first.", 400));
+  }
+
+  const isPasswordMatched = await volunteer.comparePassword(password);
+  if (!isPasswordMatched) {
+    return next(new ErrorHandler("Invalid email or password.", 400));
+  }
+
+  volunteerToken(volunteer, 200, "Volunteer logged in successfully.", res);
+});
+
+// Logout
+export const logout = catchAsyncError(async (req, res, next) => {
+  res.status(200).cookie("token", "", {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  }).json({ success: true, message: "Logged out successfully." });
+});
+
+// Forgot Password
 export const forgotPassword = catchAsyncError(async (req, res, next) => {
-  const volunteer = await Volunteer.findOne({
-    email: req.body.email,
-    accountVerified: true,
-  });
+  const volunteer = await Volunteer.findOne({ email: req.body.email, accountVerified: true });
   if (!volunteer) {
-    return next(new ErrorHandler("volunteer not found.", 404));
+    return next(new ErrorHandler("Volunteer not found.", 404));
   }
   const resetToken = volunteer.generateResetPasswordToken();
   await volunteer.save({ validateBeforeSave: false });
   const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
 
-  const message = `Your Reset Password Token is:- \n\n ${resetPasswordUrl} \n\n If you have not requested this email then please ignore it.`;
+  const message = `
+    <div style='font-family: Arial, sans-serif;'>
+      <h2>Password Reset Request</h2>
+      <p>Reset your password using the link below:</p>
+      <p>${resetPasswordUrl}</p>
+    </div>
+  `;
 
   try {
-    sendEmail({
-      email: volunteer.email,
-      subject: "MERN AUTHENTICATION APP RESET PASSWORD",
-      message,
-    });
-    res.status(200).json({
-      success: true,
-      message: `Email sent to ${volunteer.email} successfully.`,
-    });
+    await sendEmail({ email: volunteer.email, subject: "Reset Password", message });
+    res.status(200).json({ success: true, message: `Email sent to ${volunteer.email} successfully.` });
   } catch (error) {
     volunteer.resetPasswordToken = undefined;
     volunteer.resetPasswordExpire = undefined;
-    await Volunteer.save({ validateBeforeSave: false });
-    return next(
-      new ErrorHandler(
-        error.message ? error.message : "Cannot send reset password token.",
-        500
-      )
-    );
+    await volunteer.save({ validateBeforeSave: false });
+    return next(new ErrorHandler("Cannot send reset password token.", 500));
   }
 });
 
+// Reset Password
 export const resetPassword = catchAsyncError(async (req, res, next) => {
   const { token } = req.params;
-  const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
   const volunteer = await Volunteer.findOne({
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
   if (!volunteer) {
-    return next(
-      new ErrorHandler(
-        "Reset password token is invalid or has been expired.",
-        400
-      )
-    );
+    return next(new ErrorHandler("Reset password token is invalid or has expired.", 400));
   }
-
   if (req.body.password !== req.body.confirmPassword) {
-    return next(
-      new ErrorHandler("Password & confirm password do not match.", 400)
-    );
+    return next(new ErrorHandler("Password and confirm password do not match.", 400));
   }
-
   volunteer.password = req.body.password;
   volunteer.resetPasswordToken = undefined;
   volunteer.resetPasswordExpire = undefined;
-  await Volunteer.save();
-
+  await volunteer.save();
   volunteerToken(volunteer, 200, "Reset Password Successfully.", res);
+});
+
+// Get Volunteer
+export const getvolunteer = catchAsyncError(async (req, res, next) => {
+  const volunteer = req.volunteer;
+  res.status(200).json({ success: true, volunteer });
 });

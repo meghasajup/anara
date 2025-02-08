@@ -12,8 +12,8 @@ const volunteerSchema = new mongoose.Schema({
   image: String,
   undertaking: String,
   policeVerification: String,
-  educationQualification: String,
   bankDocument: String,
+  educationQualification: String,
   email: String,
   password: {
     type: String,
@@ -31,7 +31,9 @@ const volunteerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  regNumber: { type: String, unique: true },
+  tempRegNumber: { type: String, 
+    unique: true,
+    required: true, } 
 });
 
 volunteerSchema.pre("save", async function (next) {
