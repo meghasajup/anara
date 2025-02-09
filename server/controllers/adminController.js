@@ -4,8 +4,8 @@ import { Admin } from "../models/adminModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { adminToken } from "../utils/adminToken.js";
 import crypto from "crypto";
-import { ok } from "assert";
 
+//Register
 export const register = catchAsyncError(async (req, res, next) => {
   const { name, email, phone, password } = req.body;
   console.log("Request received:", req.body);
@@ -53,6 +53,11 @@ export const register = catchAsyncError(async (req, res, next) => {
   });
 });
 
+
+
+
+
+//Login
 export const login = catchAsyncError(async (req, res, next) => {
   console.log(req.body);
 
@@ -60,17 +65,25 @@ export const login = catchAsyncError(async (req, res, next) => {
   if (!email || !password) {
     return next(new ErrorHandler("Email and password are required.", 400));
   }
+
   const admin = await Admin.findOne({ email }).select("+password");
   if (!admin) {
     return next(new ErrorHandler("Invalid email or password.", 400));
   }
+
   const isPasswordMatched = await admin.comparePassword(password);
   if (!isPasswordMatched) {
     return next(new ErrorHandler("Invalid email or password.", 400));
   }
+
   adminToken(admin, 200, "admin logged in successfully.", res);
 });
 
+
+
+
+
+//Logout
 export const logout = catchAsyncError(async (req, res, next) => {
   res
     .status(200)
@@ -84,6 +97,10 @@ export const logout = catchAsyncError(async (req, res, next) => {
     });
 });
 
+
+
+
+//GetAdmin
 export const getadmin = catchAsyncError(async (req, res, next) => {
   const admin = req.admin;
   res.status(200).json({
@@ -92,6 +109,12 @@ export const getadmin = catchAsyncError(async (req, res, next) => {
   });
 });
 
+
+
+
+
+
+//Forgot Password
 export const forgotPassword = catchAsyncError(async (req, res, next) => {
   const admin = await Admin.findOne({
     email: req.body.email,
@@ -131,6 +154,11 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
+
+
+
+//Reset Password
 export const resetPassword = catchAsyncError(async (req, res, next) => {
   const { token } = req.params;
 

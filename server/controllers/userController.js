@@ -18,6 +18,7 @@ export const sendEmailOTP = catchAsyncError(async (req, res, next) => {
   }
 
   const user = await User.findOne({ email });
+
   if (user) {
     return next(new ErrorHandler("Email is already registered.", 400));
   }
@@ -68,6 +69,10 @@ export const sendEmailOTP = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
+
+
+
 //Verify otp
 export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
   const { email, otp } = req.body;
@@ -77,11 +82,9 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
   }
 
   const storedOtpData = otpStore.get(email);
-
   if (!storedOtpData) {
     return next(new ErrorHandler("OTP not found or expired.", 400));
   }
-
   const { otp: storedOtp, otpExpire } = storedOtpData;
 
   if (Date.now() > otpExpire) {
@@ -95,12 +98,15 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
 
   // Mark OTP as verified
   otpStore.set(email, { verified: true });
-
   res.status(200).json({
     success: true,
     message: "Email verified successfully. You can now generate a Temporary Registration Number.",
   });
 });
+
+
+
+
 
 //Generate temporary register number
 export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next) => {
@@ -149,13 +155,15 @@ export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next)
   } catch (error) {
     return next(new ErrorHandler("Failed to send Temporary Registration Number.", 500));
   }
-
   res.status(200).json({
     success: true,
     message: "Temporary Registration Number assigned successfully.",
     tempRegNumber: tempReg.tempRegNumber,
   });
 });
+
+
+
 
 
 //Register
@@ -176,7 +184,6 @@ export const register = catchAsyncError(async (req, res, next) => {
 
     // Fetch tempRegNumber from DB
     const tempRegData = await TempReg.findOne({ email });
-
     if (!tempRegData) {
       return next(new ErrorHandler("Temporary Registration Number not found.", 400));
     }
@@ -230,7 +237,6 @@ export const register = catchAsyncError(async (req, res, next) => {
       <p>Best regards,<br>Anara Team</p>
     `,
       };
-
       await transporter.sendMail(mailOptions);
       console.log("Approval email sent to:", email);
     } catch (error) {
@@ -247,11 +253,14 @@ export const register = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
+
+
+
 //Approve email
 export const approveEmail = async (req, res) => {
   try {
     const { email, approved } = req.query;
-
     console.log(`User approval for ${email}: ${approved}`);
 
     if (approved === "true") {
@@ -275,18 +284,15 @@ export const approveEmail = async (req, res) => {
             pass: "wflv nsjo ofba rvov",
           },
         });
-
         const mailOptions = {
           from: "hasanulbanna2255@gmail.com",
           to: email,
           subject: "New Registration Number",
           html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
-        
         <div style="background-color: #4caf50; padding: 15px; text-align: center; border-top-left-radius: 10px; border-top-right-radius: 10px;">
           <h2 style="color: #fff; margin: 0;">Welcome!</h2>
         </div>
-  
         <div style="padding: 20px; text-align: center;">
           <p style="font-size: 18px; color: #333;">🎉 Congratulations!</p>
           <p style="font-size: 16px; color: #555;">Your new registration number is:</p>
@@ -295,18 +301,15 @@ export const approveEmail = async (req, res) => {
           </h2>
           <p style="font-size: 16px; color: #555;">Keep this number safe for future reference.</p>
         </div>
-  
         <hr style="border: none; border-top: 1px solid #ddd;">
       </div>
     `,
         };
-
         await transporter.sendMail(mailOptions);
         console.log("New regNumber send to:", email);
       } catch (error) {
         console.log("Error sending email:", error);
       }
-
       console.log(`Updated Registration Number: ${newRegNumber}`);
     }
     res.send(`<h1>Done ✅ </h1>`);
@@ -315,6 +318,8 @@ export const approveEmail = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+
 
 
 
@@ -333,12 +338,15 @@ export const login = catchAsyncError(async (req, res, next) => {
   }
 
   const isPasswordMatched = await user.comparePassword(password);
+
   if (!isPasswordMatched) {
     return next(new ErrorHandler("Invalid email or password.", 400));
   }
-
   sendToken(user, 200, "User logged in successfully.", res);
 });
+
+
+
 
 
 //Logout
@@ -353,12 +361,17 @@ export const logout = catchAsyncError(async (req, res, next) => {
 });
 
 
+
+
+
 //Forgot Password
 export const forgotPassword = catchAsyncError(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email, accountVerified: true });
+
   if (!user) {
     return next(new ErrorHandler("User not found.", 404));
   }
+
   const resetToken = user.generateResetPasswordToken();
   await user.save({ validateBeforeSave: false });
   const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
@@ -375,6 +388,7 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
       <p>Best regards,<br>Anara Team</p>
     </div>
   `;
+
   try {
     await sendEmail({
       email: user.email,
@@ -394,17 +408,23 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
 });
 
 
+
+
+
 //Reset Password
 export const resetPassword = catchAsyncError(async (req, res, next) => {
   const { token } = req.params;
   const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
+
   const user = await User.findOne({
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
+
   if (!user) {
     return next(new ErrorHandler("Reset password token is invalid or has expired.", 400));
   }
+
   if (req.body.password !== req.body.confirmPassword) {
     return next(new ErrorHandler("Password and confirm password do not match.", 400));
   }
@@ -414,6 +434,9 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   await user.save();
   sendToken(user, 200, "Reset Password Successfully.", res);
 });
+
+
+
 
 
 //Get User
