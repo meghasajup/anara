@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
   },
   temp: { type: String, unique: true },  
-  tempRegNumber: { type: String } // <-- Added registration number
+  tempRegNumber: { type: String },
 });
 
 

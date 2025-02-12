@@ -4,8 +4,9 @@ import { User } from "../models/userModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
-import { TempReg } from "../models/tempRegModel.js";
+import { userTempReg } from "../models/tempRegModel.js";
 import nodemailer from 'nodemailer'
+import { Volunteer } from "../models/volunteerModel.js";
 
 const otpStore = new Map();
 
@@ -124,15 +125,15 @@ export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next)
   }
 
   // Check if tempRegNumber already exists for the email
-  let tempReg = await TempReg.findOne({ email });
+  let tempReg = await userTempReg.findOne({ email });
 
   if (!tempReg) {
     // Generate new unique Temporary Registration Number
-    const count = await TempReg.countDocuments(); // Get count of existing registrations
+    const count = await userTempReg.countDocuments(); // Get count of existing registrations
     const tempRegNumber = `T/ASF/CANDIDATE/${String(count + 1).padStart(5, '0')}`;
 
     // Save to DB
-    tempReg = await TempReg.create({ email, tempRegNumber });
+    tempReg = await userTempReg.create({ email, tempRegNumber });
   }
 
   const message = `
@@ -166,6 +167,28 @@ export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next)
 
 
 
+//Get all volunteers for the dropdown
+export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
+  try {
+    const volunteers = await Volunteer.find({}, "name"); // Fetch only the name field
+    if (!volunteers || volunteers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No volunteers found.",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      volunteers,
+    });
+  } catch (error) {
+    return next(new ErrorHandler("Failed to fetch volunteers.", 500));
+  }
+});
+
+
+
+
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const { name, email, phone, password, guardian, address, dob, gender } = req.body;
@@ -180,10 +203,10 @@ export const register = catchAsyncError(async (req, res, next) => {
     }
 
     const emailExists = await User.findOne({ email });
-    const phoneExists = await User.findOne({ phone });
+    const phoneExists = await User.findOne({ phone }); 
 
     // Fetch tempRegNumber from DB
-    const tempRegData = await TempReg.findOne({ email });
+    const tempRegData = await userTempReg.findOne({ email });
     if (!tempRegData) {
       return next(new ErrorHandler("Temporary Registration Number not found.", 400));
     }

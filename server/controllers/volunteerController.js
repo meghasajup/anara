@@ -4,7 +4,7 @@ import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
-import { TempReg } from "../models/tempRegModel.js";
+import { volunteerTempReg } from "../models/tempRegModel.js";
 import nodemailer from 'nodemailer'
 
 const otpStore = new Map();
@@ -126,14 +126,14 @@ export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next)
   }
 
   // Check if tempRegNumber already exists for the email
-  let tempReg = await TempReg.findOne({ email });
+  let tempReg = await volunteerTempReg.findOne({ email });
 
   if (!tempReg) {
     // Generate new unique Temporary Registration Number
-    const count = await TempReg.countDocuments(); // Get count of existing registrations
+    const count = await volunteerTempReg.countDocuments(); // Get count of existing registrations
     const tempRegNumber = `T/ASF/FE/${String(count + 1).padStart(5, '0')}`;
     // Save to DB
-    tempReg = await TempReg.create({ email, tempRegNumber });
+    tempReg = await volunteerTempReg.create({ email, tempRegNumber });
   }
 
   const message = `
@@ -185,7 +185,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     const phoneExists = await Volunteer.findOne({ phone });
 
     // Fetch tempRegNumber from DB
-    const tempRegData = await TempReg.findOne({ email });
+    const tempRegData = await volunteerTempReg.findOne({ email });
 
     if (!tempRegData) {
       return next(new ErrorHandler("Temporary Registration Number not found.", 400));
@@ -409,7 +409,7 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
     await volunteer.save({ validateBeforeSave: false });
     return next(new ErrorHandler("Cannot send reset password token.", 500));
   }
-});
+});  
 
 
 
