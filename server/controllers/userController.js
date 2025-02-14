@@ -170,7 +170,7 @@ export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next)
 //Get all volunteers for the dropdown
 export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
   try {
-    const volunteers = await Volunteer.find({}, "name"); // Fetch only the name field
+    const volunteers = await Volunteer.find({}, "name"); 
     if (!volunteers || volunteers.length === 0) {
       return res.status(404).json({
         success: false,

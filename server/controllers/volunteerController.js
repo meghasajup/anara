@@ -186,7 +186,6 @@ export const register = catchAsyncError(async (req, res, next) => {
 
     // Fetch tempRegNumber from DB
     const tempRegData = await volunteerTempReg.findOne({ email });
-
     if (!tempRegData) {
       return next(new ErrorHandler("Temporary Registration Number not found.", 400));
     }
