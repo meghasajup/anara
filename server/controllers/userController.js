@@ -233,6 +233,39 @@ export const register = catchAsyncError(async (req, res, next) => {
       tempRegNumber: tempRegData.tempRegNumber, // Assign from DB
     });
 
+    // Send registration confirmation email to the user
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "hasanulbanna2255@gmail.com",
+          pass: "wflv nsjo ofba rvov",
+        },
+      });
+      const mailOptions = {
+        from: "hasanulbanna2255@gmail.com",
+        to: email,
+        subject: "Registration Successful - Welcome to Anara",
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #4caf50;">🎉 Congratulations, ${name}!</h2>
+            <p>You have successfully registered with Anara. Below are your registration details:</p>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Temporary Registration Number:</strong> ${tempRegData.tempRegNumber}</p>
+            <p>We will notify you once your registration is approved.</p>
+            <p>Thank you for joining us!</p>
+            <hr style="border: none; border-top: 1px solid #ddd;">
+            <p style="text-align: center; font-size: 12px; color: #888;">This is an automated email, please do not reply.</p>
+          </div>
+        `,
+      };
+      await transporter.sendMail(mailOptions);
+      console.log("Registration confirmation email sent to:", email);
+    } catch {
+      console.log("Error sending registration email:", error);
+    }
+
     // here the approve mail go to the user
     try {
       const transporter = nodemailer.createTransport({
