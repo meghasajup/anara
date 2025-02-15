@@ -173,7 +173,7 @@ export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
     const volunteers = await Volunteer.find({}, "name"); 
     if (!volunteers || volunteers.length === 0) {
       return res.status(404).json({
-        success: false,
+        success: false, 
         message: "No volunteers found.",
       });
     }
@@ -191,10 +191,10 @@ export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
 
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, phone, password, guardian, address, dob, gender } = req.body;
+  const { name, email, phone, password, guardian, address, dob, gender, volunteerName } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !address || !dob || !gender) {
+    if (!name || !email || !phone || !password || !guardian || !address || !dob || !gender || !volunteerName) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
@@ -224,6 +224,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       address,
       dob,
       gender,
+      volunteerName,
       image: req.files.image[0].path,
       undertaking: req.files.undertaking[0].path,
       policeVerification: req.files.policeVerification[0].path,

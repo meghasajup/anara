@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
     select: false,
   },
   phone: String,
+  volunteerName: String,
   accountVerified: { type: Boolean, default: false },
   verificationCode: Number,
   verificationCodeExpire: Date,
