@@ -209,7 +209,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       educationQualification: req.files.educationQualification[0].path,
       bankDocument: req.files.bankDocument[0].path,
       accountVerified: true,
-      tempRegNumber: tempRegData.tempRegNumber, // Assign from DB
+      tempRegNumber: tempRegData.tempRegNumber, 
     });
 
     // here the approve mail go to the Volunteer
