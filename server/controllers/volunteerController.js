@@ -6,7 +6,6 @@ import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
 import { volunteerTempReg } from "../models/tempRegModel.js";
 import nodemailer from 'nodemailer'
-import { log } from "console";
 
 const otpStore = new Map();
 
