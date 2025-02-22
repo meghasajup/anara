@@ -4,6 +4,8 @@ import { Admin } from "../models/adminModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { adminToken } from "../utils/adminToken.js";
 import crypto from "crypto";
+import { User } from "../models/userModel.js";
+import { Volunteer } from "../models/volunteerModel.js";
 
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
@@ -200,4 +202,67 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
 
   // Send success response and token
   adminToken(admin, 200, "Password reset successfully.", res);
+});
+
+
+
+
+
+//Get all volunteers in Admin Dashboard
+export const getAllVolunteers = catchAsyncError(async (req, res, next) => {
+  try {
+    // Fetch all volunteers
+    const volunteers = await Volunteer.find({});
+
+    // Combine the results into a single response
+    res.status(200).json({
+      success: true,
+      volunteers,
+    });
+  } catch (error) {
+    return next(new ErrorHandler("Failed to fetch volunteers.", 500));
+  }
+});
+
+
+
+
+//Get all users in Admin Dashboard
+export const getAllUsers = catchAsyncError(async (req, res, next) => {
+  try {
+
+    // Fetch all users
+    const users = await User.find({});
+
+    // Combine the results into a single response
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    return next(new ErrorHandler("Failed to fetch volunteers and users.", 500));
+  }
+});
+
+
+
+
+// Count of users and volunteers
+export const CountVolunteersAndUsers = catchAsyncError(async (req, res, next) => {
+  try {
+    // Get count of volunteers
+    const volunteerCount = await Volunteer.countDocuments();
+
+    // Get count of users
+    const userCount = await User.countDocuments();
+
+    // Return the counts
+    res.status(200).json({
+      success: true,
+      volunteerCount,
+      userCount,
+    });
+  } catch (error) {
+    return next(new ErrorHandler("Failed to fetch volunteer and user counts.", 500));
+  }
 });
