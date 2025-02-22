@@ -6,6 +6,7 @@ import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
 import { volunteerTempReg } from "../models/tempRegModel.js";
 import nodemailer from 'nodemailer'
+import { log } from "console";
 
 const otpStore = new Map();
 
@@ -134,6 +135,8 @@ export const generateTemporaryRegNumber = catchAsyncError(async (req, res, next)
     const tempRegNumber = `T/ASF/FE/${String(count + 1).padStart(5, '0')}`;
     // Save to DB
     tempReg = await volunteerTempReg.create({ email, tempRegNumber });
+  } else {
+    return next(new ErrorHandler("Temp not found.", 400));
   }
 
   const message = `
