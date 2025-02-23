@@ -189,6 +189,7 @@ export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
 
 
 
+
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const { name, email, phone, password, guardian, address, dob, gender, volunteerName } = req.body;
@@ -279,6 +280,8 @@ export const register = catchAsyncError(async (req, res, next) => {
           pass: "wflv nsjo ofba rvov",
         },
       });
+
+      
 
       // Approval links
       const yesLink = `http://localhost:4000/api/v1/user/approve?email=${encodeURIComponent(email)}&approved=true`;

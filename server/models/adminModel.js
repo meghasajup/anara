@@ -4,15 +4,30 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 const adminSchema = new mongoose.Schema({
-  name: String,
-  email: String,
+  name: {
+    type: String,
+    required: [true, "Name is required"]
+  },
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
+  },
   password: {
     type: String,
-    minLength: [8, "Password must have at least 8 characters."],
-    maxLength: [32, "Password cannot have more than 32 characters."],
-    select: false,
+    required: [true, "Password is required"],
+    minLength: [8, "Password must have at least 8 characters"],
+    maxLength: [32, "Password cannot have more than 32 characters"],
+    select: false
   },
-  phone: String,
+  phone: {
+    type: String,
+    required: [true, "Phone number is required"],
+    unique: true
+  },
   verificationCode: Number,
   verificationCodeExpire: Date,
   resetPasswordToken: String,

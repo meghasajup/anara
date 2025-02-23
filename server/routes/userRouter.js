@@ -44,5 +44,4 @@ router.post("/forgot-password", forgotPassword); //Forgot password
 
 router.put("/reset-password/:token", resetPassword); //Reset password with token
 
-
 export default router;

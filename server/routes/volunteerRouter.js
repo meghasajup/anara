@@ -35,7 +35,7 @@ router.post("/register", upload.fields([
 
 router.post("/login", login); //Login user
 
-router.get("/count",isVolunteerAuthenticated, getUserCount)
+router.get("/count", isVolunteerAuthenticated, getUserCount) //Get user count
 
 router.get("/logout", isVolunteerAuthenticated, logout); //Logout user
 

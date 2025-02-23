@@ -12,4 +12,3 @@ export const isVolunteerAuthenticated = catchAsyncError(async (req, res, next) =
     req.volunteer = await Volunteer.findById(decoded.id);
     next();
 });
-

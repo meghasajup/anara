@@ -102,6 +102,7 @@ export const logout = catchAsyncError(async (req, res, next) => {
 
 
 
+
 //GetAdmin
 export const getadmin = catchAsyncError(async (req, res, next) => {
   const admin = req.admin;
@@ -110,7 +111,6 @@ export const getadmin = catchAsyncError(async (req, res, next) => {
     admin,
   });
 });
-
 
 
 
@@ -227,6 +227,7 @@ export const getAllVolunteers = catchAsyncError(async (req, res, next) => {
 
 
 
+
 //Get all users in Admin Dashboard
 export const getAllUsers = catchAsyncError(async (req, res, next) => {
   try {
@@ -243,6 +244,7 @@ export const getAllUsers = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Failed to fetch volunteers and users.", 500));
   }
 });
+
 
 
 
