@@ -6,6 +6,7 @@ import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
 import { volunteerTempReg } from "../models/tempRegModel.js";
 import nodemailer from 'nodemailer'
+import { User } from "../models/userModel.js";
 
 const otpStore = new Map();
 
@@ -439,6 +440,52 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   volunteer.resetPasswordExpire = undefined;
   await volunteer.save();
   sendToken(volunteer, 200, "Reset Password Successfully.", res);
+});
+
+
+
+
+
+//Count of users under volunteer
+export const getUserCount = catchAsyncError(async (req, res, next) => {
+  // First check if volunteer exists in request
+  if (!req.volunteer) {
+      return next(new ErrorHandler("Volunteer not found in request. Are you logged in?", 401));
+  }
+
+  const volunteerName = req.volunteer.name; // Get volunteer's name
+  console.log("Checking users for volunteer:", volunteerName); // Debug log
+
+  try {
+      // Count users where volunteerName matches the logged-in volunteer's name
+      const userCount = await User.countDocuments({ volunteerName: volunteerName });
+      console.log("User count:", userCount); // Debug log
+
+      // Get user details
+      const users = await User.find({ volunteerName: volunteerName })
+          .select('name email createdAt accountVerified')
+          .sort({ createdAt: -1 });
+      console.log("Found users:", users.length); // Debug log
+
+      // Calculate statistics
+      const verifiedUsers = users.filter(user => user.accountVerified).length;
+      const unverifiedUsers = users.filter(user => !user.accountVerified).length;
+
+      res.status(200).json({
+          success: true,
+          data: {
+              totalUsers: userCount,
+              verifiedUsers,
+              unverifiedUsers,
+              recentUsers: users.slice(0, 5), // Return 5 most recent users
+          },
+          message: "User count retrieved successfully",
+      });
+
+  } catch (error) {
+      console.error("Error in getUserCount:", error); // Detailed error logging
+      return next(new ErrorHandler(`Error retrieving user count: ${error.message}`, 500));
+  }
 });
 
 

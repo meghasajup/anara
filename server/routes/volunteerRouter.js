@@ -10,6 +10,7 @@ import {
   generateTemporaryRegNumber,
   approveEmail,
   getVolunteer,
+  getUserCount,
 } from "../controllers/volunteerController.js";
 import { isVolunteerAuthenticated } from "../middlewares/authVolunteer.js";
 import { upload } from "../multer/upload.js";
@@ -33,6 +34,8 @@ router.post("/register", upload.fields([
 ]), register); //Register user with image upload
 
 router.post("/login", login); //Login user
+
+router.get("/count",isVolunteerAuthenticated, getUserCount)
 
 router.get("/logout", isVolunteerAuthenticated, logout); //Logout user
 
