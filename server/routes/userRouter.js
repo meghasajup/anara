@@ -8,8 +8,8 @@ import {
   getUser,
   forgotPassword,
   resetPassword,
-  generateTemporaryRegNumber,
-  approveEmail,
+  // generateTemporaryRegNumber,
+  // approveEmail,
   getVolunteersDropdown,
 } from "../controllers/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
@@ -21,9 +21,9 @@ router.post("/send-email-otp", sendEmailOTP); //OTP for email verification
 
 router.post("/verify-email-otp", verifyEmailOTP); //Verify OTP for email verification
 
-router.post("/generate-temp-reg", generateTemporaryRegNumber); //Generate temporary registration number
+// router.post("/generate-temp-reg", generateTemporaryRegNumber); //Generate temporary registration number
 
-router.get('/approve', approveEmail) //Approve email
+// router.get('/approve', approveEmail) //Approve email
 
 router.get("/volunteers", getVolunteersDropdown); //All volunteers for the dropdown
 

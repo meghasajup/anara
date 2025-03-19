@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true
   },
-  tempRegNumber: {
+  RegNumber: {
     type: String,
     unique: true
   }

@@ -7,8 +7,8 @@ import {
   logout,
   forgotPassword,
   resetPassword,
-  generateTemporaryRegNumber,
-  approveEmail,
+  // generateTemporaryRegNumber,
+  // approveEmail,
   getVolunteer,
   getUserCount,
 } from "../controllers/volunteerController.js";
@@ -21,9 +21,9 @@ router.post("/send-email-otp", sendEmailOTP); //OTP for email verification
 
 router.post("/verify-email-otp", verifyEmailOTP); //Verify OTP for email verification
 
-router.post("/generate-temp-reg", generateTemporaryRegNumber); //Generate temporary registration number
+// router.post("/generate-temp-reg", generateTemporaryRegNumber); //Generate temporary registration number
 
-router.get('/approve', approveEmail) //Approve email
+// router.get('/approve', approveEmail) //Approve email
 
 router.post("/register", upload.fields([
   { name: "image", maxCount: 1 },
