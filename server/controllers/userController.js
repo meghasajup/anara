@@ -169,10 +169,10 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
 //Get all volunteers for the dropdown
 export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
   try {
-    const volunteers = await Volunteer.find({}, "name"); 
+    const volunteers = await Volunteer.find({}, "name");
     if (!volunteers || volunteers.length === 0) {
       return res.status(404).json({
-        success: false, 
+        success: false,
         message: "No volunteers found.",
       });
     }
@@ -191,14 +191,14 @@ export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
 
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, phone, password, guardian, address, dob, gender, volunteerName } = req.body;
+  const { name, email, phone, password, guardian, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerName } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !address || !dob || !gender || !volunteerName) {
+    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerName) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
-    if (!req.files || !req.files.image || !req.files.undertaking || !req.files.policeVerification || !req.files.educationQualification) {
+    if (!req.files || !req.files.image || !req.files.undertaking || !req.files.policeVerification || !req.files.educationQualification || !req.files.bankPassbook) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
     }
 
@@ -212,7 +212,7 @@ export const register = catchAsyncError(async (req, res, next) => {
     // Generate Temporary Registration Number
     const count = await User.countDocuments();
     console.log(count);
-    
+
     const tempRegNumber = `ASF/CANDIDATE/${String(count + 1).padStart(5, '0')}`;
 
     // Create user with tempRegNumber
@@ -223,15 +223,20 @@ export const register = catchAsyncError(async (req, res, next) => {
       password,
       guardian,
       address,
+      currentAddress,
       dob,
       gender,
+      bankAccNumber,
+      bankName,
+      ifsc,
       volunteerName,
       image: req.files.image[0].path,
       undertaking: req.files.undertaking[0].path,
       policeVerification: req.files.policeVerification[0].path,
       educationQualification: req.files.educationQualification[0].path,
+      bankPassbook: req.files.bankPassbook[0].path,
       accountVerified: true,
-      RegNumber:tempRegNumber, 
+      RegNumber: tempRegNumber,
     });
 
     // Send registration confirmation email to the user

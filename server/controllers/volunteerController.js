@@ -4,7 +4,6 @@ import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
-import { volunteerTempReg } from "../models/tempRegModel.js";
 import nodemailer from 'nodemailer'
 import { User } from "../models/userModel.js";
 
@@ -187,16 +186,14 @@ export const register = catchAsyncError(async (req, res, next) => {
     const emailExists = await Volunteer.findOne({ email });
     const phoneExists = await Volunteer.findOne({ phone });
 
-    // Fetch tempRegNumber from DB
-   
-
     if (emailExists || phoneExists) {
       return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
+
     const count = await Volunteer.countDocuments();
-        console.log(count);
-        
-        const tempRegNumber = `ASF/CANDIDATE/${String(count + 1).padStart(5, '0')}`;
+    console.log(count);
+
+    const tempRegNumber = `ASF/FE/${String(count + 1).padStart(5, '0')}`;
 
     const volunteer = await Volunteer.create({
       name,
@@ -213,11 +210,47 @@ export const register = catchAsyncError(async (req, res, next) => {
       educationQualification: req.files.educationQualification[0].path,
       bankDocument: req.files.bankDocument[0].path,
       accountVerified: true,
-      tempRegNumber, 
+      tempRegNumber,
     });
 
-    // here the approve mail go to the Volunteer
-    
+    // Send welcome email to the volunteer
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "hasanulbanna2255@gmail.com",
+          pass: "wflv nsjo ofba rvov",
+        },
+      });
+
+      const mailOptions = {
+        from: "hasanulbanna2255@gmail.com",
+        to: email,
+        subject: "Welcome to Anara - Registration Successful",
+        html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #007bff; text-align: center;">🌟 Welcome to Anara, ${name}! 🌟</h2>
+        <p style="font-size: 16px;">Dear Volunteer ${name},</p>
+        <p>We are delighted to have you on board! Your registration with Anara has been successfully completed. Below are your details:</p>
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Registration Number:</strong> ${tempRegNumber}</p>
+        </div>
+        <p>If you have any questions, feel free to reach out to our support team.</p>
+        <p>Thank you for choosing Anara! We look forward to having you as part of our community.</p>
+        <hr style="border: none; border-top: 1px solid #ddd;">
+        <p style="text-align: center; font-size: 12px; color: #888;">This is an automated email, please do not reply.</p>
+      </div>
+    `,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log("Welcome email sent to:", email);
+    } catch (error) {
+      console.log("Error sending welcome email:", error);
+    }
+
     res.status(201).json({
       success: true,
       message: "Volunteer registered successfully.",
@@ -381,7 +414,7 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
     await volunteer.save({ validateBeforeSave: false });
     return next(new ErrorHandler("Cannot send reset password token.", 500));
   }
-});  
+});
 
 
 
@@ -420,34 +453,34 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
 export const getUserCount = catchAsyncError(async (req, res, next) => {
   // First check if volunteer exists in request
   if (!req.volunteer) {
-      return next(new ErrorHandler("Volunteer not found in request. Are you logged in?", 401));
+    return next(new ErrorHandler("Volunteer not found in request. Are you logged in?", 401));
   }
 
-  const volunteerName = req.volunteer.name; 
+  const volunteerName = req.volunteer.name;
   try {
-      // Count users where volunteerName matches the logged-in volunteer's name
-      const userCount = await User.countDocuments({ volunteerName: volunteerName });
-      // Get user details
-      const users = await User.find({ volunteerName: volunteerName })
-          .select('name email createdAt accountVerified')
-          .sort({ createdAt: -1 });
-      // Calculate statistics
-      const verifiedUsers = users.filter(user => user.accountVerified).length;
-      const unverifiedUsers = users.filter(user => !user.accountVerified).length;
+    // Count users where volunteerName matches the logged-in volunteer's name
+    const userCount = await User.countDocuments({ volunteerName: volunteerName });
+    // Get user details
+    const users = await User.find({ volunteerName: volunteerName })
+      .select('name email createdAt accountVerified')
+      .sort({ createdAt: -1 });
+    // Calculate statistics
+    const verifiedUsers = users.filter(user => user.accountVerified).length;
+    const unverifiedUsers = users.filter(user => !user.accountVerified).length;
 
-      res.status(200).json({
-          success: true,
-          data: {
-              totalUsers: userCount,
-              verifiedUsers,
-              unverifiedUsers,
-              recentUsers: users.slice(0, 5), 
-          },
-          message: "User count retrieved successfully",
-      });
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers: userCount,
+        verifiedUsers,
+        unverifiedUsers,
+        recentUsers: users.slice(0, 5),
+      },
+      message: "User count retrieved successfully",
+    });
 
   } catch (error) {
-      return next(new ErrorHandler(`Error retrieving user count: ${error.message}`, 500));
+    return next(new ErrorHandler(`Error retrieving user count: ${error.message}`, 500));
   }
 });
 
