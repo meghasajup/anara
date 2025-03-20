@@ -191,15 +191,26 @@ export const getVolunteersDropdown = catchAsyncError(async (req, res, next) => {
 
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, phone, password, guardian, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerName } = req.body;
+  const { 
+    name, email, phone, password, guardian, address, currentAddress, dob, gender, 
+    bankAccNumber, bankName, ifsc, volunteerName, pwdCategory, entrepreneurshipInterest 
+  } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerName) {
+    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerName || pwdCategory === undefined || entrepreneurshipInterest === undefined) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
     if (!req.files || !req.files.image || !req.files.undertaking || !req.files.policeVerification || !req.files.educationQualification || !req.files.bankPassbook) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
+    }
+
+    if (pwdCategory === "Yes" && !req.files.pwdCertificate) {
+      return next(new ErrorHandler("PWD Certificate is required.", 400));
+    }
+    
+    if (entrepreneurshipInterest === "Yes" && !req.files.bplCertificate) {
+      return next(new ErrorHandler("BPL/marginalized category certificate is required.", 400));
     }
 
     const emailExists = await User.findOne({ email });
@@ -209,35 +220,36 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
 
-    // Generate Temporary Registration Number
+    // ✅ Ensure regNumber is generated before creating the user
     const count = await User.countDocuments();
-    console.log(count);
+    const regNumber = `ASF/CANDIDATE/${String(count + 1).padStart(5, '0')}`;
 
-    const tempRegNumber = `ASF/CANDIDATE/${String(count + 1).padStart(5, '0')}`;
+    // ✅ Debugging: Check if regNumber is null
+    console.log("Generated regNumber:", regNumber);
 
-    // Create user with tempRegNumber
+    if (!regNumber) {
+      return next(new ErrorHandler("Failed to generate registration number.", 500));
+    }
+    const validBankAccNumber = bankAccNumber && bankAccNumber.trim() !== "" ? bankAccNumber : "Not Provided";
+
+ 
+    // ✅ Now creating user with permanent regNumber
     const user = await User.create({
-      name,
-      email,
-      phone,
-      password,
-      guardian,
-      address,
-      currentAddress,
-      dob,
-      gender,
-      bankAccNumber,
-      bankName,
-      ifsc,
-      volunteerName,
+      name, email, phone, password, guardian, address, currentAddress, dob, gender, 
+      bankAccNumber:validBankAccNumber, bankName, ifsc, volunteerName, 
+      pwdCategory, entrepreneurshipInterest,
       image: req.files.image[0].path,
       undertaking: req.files.undertaking[0].path,
       policeVerification: req.files.policeVerification[0].path,
       educationQualification: req.files.educationQualification[0].path,
       bankPassbook: req.files.bankPassbook[0].path,
+      pwdCertificate: pwdCategory === "Yes" ? req.files.pwdCertificate[0].path : null,
+      bplCertificate: entrepreneurshipInterest === "Yes" ? req.files.bplCertificate[0].path : null,
       accountVerified: true,
-      RegNumber: tempRegNumber,
+      regNumber, // ✅ Assign regNumber before saving
     });
+
+    console.log("User created with regNumber:", user.regNumber);
 
     // Send registration confirmation email to the user
     try {
@@ -261,9 +273,8 @@ export const register = catchAsyncError(async (req, res, next) => {
             <div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">
               <p><strong>Name:</strong> ${name}</p>
               <p><strong>Email:</strong> ${email}</p>
-              <p><strong> Registration Number:</strong> ${tempRegNumber}</p>
+              <p><strong>Registration Number:</strong> ${regNumber}</p>
             </div>
-            
             <p>If you have any questions, feel free to reach out to our support team.</p>
             <p>Thank you for choosing Anara! We look forward to having you as part of our community.</p>
             <hr style="border: none; border-top: 1px solid #ddd;">
@@ -277,18 +288,19 @@ export const register = catchAsyncError(async (req, res, next) => {
     } catch (error) {
       console.log("Error sending registration email:", error);
     }
-
+  
     res.status(201).json({
       success: true,
       message: "User registered successfully.",
       user,
     });
-
   } catch (error) {
     console.log(error);
     return next(new ErrorHandler(error, 500));
   }
 });
+
+
 
 
 

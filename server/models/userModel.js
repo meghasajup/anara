@@ -86,6 +86,24 @@ const userSchema = new mongoose.Schema({
     required: [true, "Volunteer name is required"],
     ref: 'Volunteer'
   },
+  pwdCategory: {
+    type: String,
+    required: true,
+    enum: ["Yes", "No"],
+  },
+  pwdCertificate: {
+    type: String,
+    default: null,
+  },
+  entrepreneurshipInterest: {
+    type: String,
+    required: true,
+    enum: ["Yes", "No"],
+  },
+  bplCertificate: {
+    type: String,
+    default: null,
+  },
   accountVerified: {
     type: Boolean,
     default: false
@@ -100,11 +118,12 @@ const userSchema = new mongoose.Schema({
   },
   temp: {
     type: String,
-    unique: true
+    
   },
-  RegNumber: {
+  regNumber: {
     type: String,
-    unique: true
+    unique: true,
+    required:true
   }
 });
 

@@ -29,7 +29,7 @@ router.post("/register", upload.fields([
   { name: "image", maxCount: 1 },
   { name: "undertaking", maxCount: 1 },
   { name: "policeVerification", maxCount: 1 },
-  { name: "educationQualification", maxCount: 1 },
+  { name: "educationCertificate", maxCount: 1 },
   { name: "bankDocument", maxCount: 1 },
 ]), register); //Register user with image upload
 

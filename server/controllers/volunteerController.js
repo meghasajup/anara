@@ -102,7 +102,7 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Email verified successfully. You can now generate a Temporary Registration Number.",
+    message: "Email verified successfully.",
   });
 });
 
@@ -172,14 +172,36 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
 
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, phone, password, guardian, address, dob, gender } = req.body;
+  const {
+    name,
+    email,
+    phone,
+    password,
+    guardian,
+    address,
+    currentAddress,
+    dob,
+    gender,
+    bankAccNumber,
+    bankName,
+    ifsc,
+    educationDegree,
+    educationYearOfCompletion,
+    employmentStatus,
+    monthlyIncomeRange
+  } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !address || !dob || !gender) {
+    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !educationDegree || !educationYearOfCompletion || !employmentStatus) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
-    if (!req.files || !req.files.image || !req.files.undertaking || !req.files.policeVerification || !req.files.educationQualification || !req.files.bankDocument) {
+    // Check if monthly income range is provided when employment status is "Employed"
+    if (employmentStatus === "Employed" && !monthlyIncomeRange) {
+      return next(new ErrorHandler("Monthly income range is required for employed volunteers.", 400));
+    }
+
+    if (!req.files || !req.files.image || !req.files.undertaking || !req.files.policeVerification || !req.files.educationCertificate || !req.files.bankDocument) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
     }
 
@@ -195,23 +217,39 @@ export const register = catchAsyncError(async (req, res, next) => {
 
     const tempRegNumber = `ASF/FE/${String(count + 1).padStart(5, '0')}`;
 
-    const volunteer = await Volunteer.create({
+    const volunteerData = {
       name,
       email,
       phone,
       password,
       guardian,
       address,
+      currentAddress,
       dob,
       gender,
+      bankAccNumber,
+      bankName,
+      ifsc,
+      employmentStatus,
       image: req.files.image[0].path,
       undertaking: req.files.undertaking[0].path,
       policeVerification: req.files.policeVerification[0].path,
-      educationQualification: req.files.educationQualification[0].path,
+      educationQualification: {
+        degree: educationDegree,
+        yearOfCompletion: educationYearOfCompletion,
+        certificate: req.files.educationCertificate[0].path
+      },
       bankDocument: req.files.bankDocument[0].path,
       accountVerified: true,
       tempRegNumber,
-    });
+    };
+
+    // Add monthlyIncomeRange only if employment status is "Employed"
+    if (employmentStatus === "Employed") {
+      volunteerData.monthlyIncomeRange = monthlyIncomeRange;
+    }
+
+    const volunteer = await Volunteer.create(volunteerData);
 
     // Send welcome email to the volunteer
     try {
