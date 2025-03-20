@@ -86,6 +86,10 @@ const userSchema = new mongoose.Schema({
     required: [true, "Volunteer name is required"],
     ref: 'Volunteer'
   },
+  accountVerified: {
+    type: Boolean,
+    default: false
+  },
   pwdCategory: {
     type: String,
     required: true,
@@ -104,10 +108,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  accountVerified: {
-    type: Boolean,
-    default: false
-  },
   verificationCode: Number,
   verificationCodeExpire: Date,
   resetPasswordToken: String,
@@ -118,12 +118,11 @@ const userSchema = new mongoose.Schema({
   },
   temp: {
     type: String,
-    
+    unique: true
   },
-  regNumber: {
+  RegNumber: {
     type: String,
-    unique: true,
-    required:true
+    unique: true
   }
 });
 
