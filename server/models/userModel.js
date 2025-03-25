@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Guardian name is required"]
   },
+  age: {
+    type: Number,
+    required: [true, "Age is required"]
+  },
   address: {
     type: String,
     required: [true, "Address is required"]
@@ -120,7 +124,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true
   },
-  RegNumber: {
+  regNumber: {
     type: String,
     unique: true
   }

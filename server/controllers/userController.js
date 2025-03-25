@@ -207,11 +207,11 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerName, pwdCategory, entrepreneurshipInterest
+    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerName, pwdCategory, entrepreneurshipInterest
   } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerName || pwdCategory === undefined || entrepreneurshipInterest === undefined) {
+    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerName || pwdCategory === undefined || entrepreneurshipInterest === undefined) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
@@ -263,6 +263,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       phone,
       password,
       guardian,
+      age,
       address,
       currentAddress,
       dob,

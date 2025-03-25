@@ -103,7 +103,7 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Email verified successfully. You can now generate a Temporary Registration Number.",
+    message: "Email verified successfully.",
   });
 });
 
@@ -189,11 +189,11 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, educationDegree, educationYearOfCompletion, employmentStatus, monthlyIncomeRange
+    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, educationDegree, educationYearOfCompletion, employmentStatus, monthlyIncomeRange
   } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !educationDegree || !educationYearOfCompletion || !employmentStatus) {
+    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !educationDegree || !educationYearOfCompletion || !employmentStatus) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
@@ -232,6 +232,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       password,
       guardian,
       address,
+      age,
       currentAddress,
       dob,
       gender,

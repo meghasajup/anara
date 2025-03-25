@@ -21,11 +21,15 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: "https://digi-colab-roan.vercel.app", // Your frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    credentials: true, // Allow cookies and authorization headers
   })
 );
+
+// Optional: Handle preflight requests manually
+app.options("*", cors());
+
 
 app.use(cookieParser());
 app.use(express.json());
