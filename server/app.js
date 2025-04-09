@@ -21,7 +21,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
-    origin: "https://digi-colab-roan.vercel.app", // Your frontend URL
+    origin: "https://digi-colab-roan.vercel.app", // Frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and authorization headers
   })
