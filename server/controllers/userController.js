@@ -128,16 +128,20 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerRegNum, pwdCategory, entrepreneurshipInterest
+    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerRegNum, pwdCategory, entrepreneurshipInterest, undertaking
   } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined) {
+    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined || undertaking === undefined) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
-    if (!req.files || !req.files.image || !req.files.undertaking || !req.files.educationQualification || !req.files.bankPassbook) {
+    if (!req.files || !req.files.image || !req.files.educationQualification || !req.files.bankPassbook) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
+    }
+
+    if (undertaking !== 'true' && undertaking !== true) {
+      return next(new ErrorHandler("Confirmation is required.", 400));
     }
 
     if (pwdCategory === "Yes" && !req.files.pwdCertificate) {
@@ -170,7 +174,6 @@ export const register = catchAsyncError(async (req, res, next) => {
 
     // Upload Files to Cloudinary
     const image = await uploadToCloudinary(req.files.image[0].buffer, "users");
-    const undertaking = await uploadToCloudinary(req.files.undertaking[0].buffer, "documents");
     const educationQualification = await uploadToCloudinary(req.files.educationQualification[0].buffer, "documents");
     const bankPassbook = await uploadToCloudinary(req.files.bankPassbook[0].buffer, "documents");
 
@@ -199,8 +202,8 @@ export const register = catchAsyncError(async (req, res, next) => {
       volunteerRegNum,
       pwdCategory,
       entrepreneurshipInterest,
-      image,
       undertaking,
+      image,
       policeVerification,
       educationQualification,
       bankPassbook,

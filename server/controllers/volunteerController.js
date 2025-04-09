@@ -131,12 +131,17 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, educationDegree, educationYearOfCompletion, employmentStatus, monthlyIncomeRange
+    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, educationDegree, educationYearOfCompletion, employmentStatus, monthlyIncomeRange, undertaking
   } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !educationDegree || !educationYearOfCompletion || !employmentStatus) {
+    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName ||!ifsc || !educationDegree || !educationYearOfCompletion || !employmentStatus) {
       return next(new ErrorHandler("All fields are required.", 400));
+    }
+
+    // Check if undertaking confirmation is provided
+    if (undertaking !== 'true' && undertaking !== true) {
+      return next(new ErrorHandler("Confirmation is required.", 400));
     }
 
     // Check if monthly income range is provided when employment status is "Employed"
@@ -144,8 +149,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Monthly income range is required for employed volunteers.", 400));
     }
 
-    // Check for required files separately, excluding policeVerification
-    if (!req.files || !req.files.image || !req.files.undertaking || !req.files.educationCertificate || !req.files.bankDocument) {
+    if (!req.files || !req.files.image || !req.files.educationCertificate || !req.files.bankDocument) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
     }
 
@@ -162,7 +166,6 @@ export const register = catchAsyncError(async (req, res, next) => {
     const tempRegNumber = `ASF/FE/${String(count + 1).padStart(5, '0')}`;
 
     const image = await uploadToCloudinary(req.files.image[0].buffer, "users");
-    const undertaking = await uploadToCloudinary(req.files.undertaking[0].buffer, "documents");
     const educationCertificate = await uploadToCloudinary(req.files.educationCertificate[0].buffer, "documents");
     const bankDocument = await uploadToCloudinary(req.files.bankDocument[0].buffer, "documents");
 
@@ -188,7 +191,8 @@ export const register = catchAsyncError(async (req, res, next) => {
       ifsc,
       employmentStatus,
       image,
-      undertaking,
+      // undertaking is now a boolean, not a document URL
+      undertaking: undertaking === 'true' || undertaking === true,
       educationQualification: {
         degree: educationDegree,
         yearOfCompletion: educationYearOfCompletion,

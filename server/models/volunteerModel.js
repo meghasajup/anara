@@ -46,8 +46,9 @@ const volunteerSchema = new mongoose.Schema({
   },
 
   undertaking: {
-    type: String,
-    required: [true, "Undertaking document is required"]
+    type: Boolean,
+    default: false,
+    required: [true, "Confirmation is required"]
   },
 
   policeVerification: {
@@ -149,7 +150,8 @@ const volunteerSchema = new mongoose.Schema({
   },
 
   temp: {
-    type: String  },
+    type: String
+  },
 
   tempRegNumber: {
     type: String,
