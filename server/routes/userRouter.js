@@ -10,7 +10,7 @@ import {
   resetPassword,
   // generateTemporaryRegNumber,
   // approveEmail,
-  getVolunteersDropdown,
+  // getVolunteersDropdown,
 } from "../controllers/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 import { upload } from "../multer/upload.js";
@@ -25,7 +25,7 @@ router.post("/verify-email-otp", verifyEmailOTP); //Verify OTP for email verific
 
 // router.get('/approve', approveEmail) //Approve email
 
-router.get("/volunteers", getVolunteersDropdown); //All volunteers for the dropdown
+// router.get("/volunteers", getVolunteersDropdown); //All volunteers for the dropdown
 
 router.post(
   "/register",

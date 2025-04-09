@@ -52,7 +52,6 @@ const volunteerSchema = new mongoose.Schema({
 
   policeVerification: {
     type: String,
-    required: [true, "Police verification is required"]
   },
 
   bankAccNumber: {

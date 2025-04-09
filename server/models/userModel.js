@@ -43,7 +43,6 @@ const userSchema = new mongoose.Schema({
   },
   policeVerification: {
     type: String,
-    required: [true, "Police verification is required"]
   },
   educationQualification: {
     type: String,
@@ -85,7 +84,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Bank passbook or bank statement document is required"],
   },
-  volunteerName: {
+  volunteerRegNum: {
     type: String,
     required: [true, "Volunteer name is required"],
     ref: 'Volunteer'
@@ -126,7 +125,7 @@ const userSchema = new mongoose.Schema({
   regNumber: {
     type: String,
     unique: true
-  }
+  },
 });
 
 
