@@ -161,6 +161,10 @@ const volunteerSchema = new mongoose.Schema({
   isBlocked:{
     type:Boolean,
     default:false
+  },
+  isPayment: {
+    type:Boolean,
+    default:false
   }
 });
 

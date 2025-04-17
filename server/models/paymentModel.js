@@ -3,7 +3,7 @@
 // const paymentRequest = new mongoose.Schema({
 //     volunteer: {
 //         type: mongoose.Schema.Types.ObjectId,
-//         ref: 'Volunteer',
+//         ref: 'volunteer',
 //         required: true
 //     },
 //     volunteerRegNumber: {

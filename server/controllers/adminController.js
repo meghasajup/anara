@@ -285,6 +285,7 @@ export const CountVolunteersAndUsers = catchAsyncError(async (req, res, next) =>
   }
 });
 
+//Candidate count per volunteer
 export const getCandidateCountPerVolunteer = catchAsyncError(async (req, res, next) => {
   try {
     const aggregation = await User.aggregate([
@@ -328,7 +329,7 @@ export const getCandidateCountPerVolunteer = catchAsyncError(async (req, res, ne
   }
 });
 
-
+//Volunteers with users
 export const getVolunteerWithUsers = catchAsyncError(async (req, res, next) => {
   try {
     const { regNumber } = req.params;
@@ -356,11 +357,11 @@ export const getVolunteerWithUsers = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
+//Toggle Volunteer block
 export const toggleVolunteerBlock = catchAsyncError(async (req, res, next) => {
   try {
-    const { regNumber } = req.params;      // regNumber from URL
-    const { block } = req.body;            // true to block, false to unblock
+    const { regNumber } = req.params;      
+    const { block } = req.body;            
 
     const volunteer = await Volunteer.findOne({ tempRegNumber: regNumber });
 

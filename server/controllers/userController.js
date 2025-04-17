@@ -444,3 +444,18 @@ export const updateCCCStatus = catchAsyncError(async (req, res, next) => {
     user
   });
 });
+
+
+//Check CCC
+export const checkCCCStatus = catchAsyncError(async (req, res, next) => {
+  const user = req.user;
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  
+  res.status(200).json({
+    success: true,
+    cccCertified: user.cccCertified === "Yes" ? true : false
+  });
+});
