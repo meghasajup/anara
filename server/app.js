@@ -10,6 +10,8 @@ import adminRouter from "./routes/adminRouter.js";
 import { removeUnverifiedAccounts } from "./automation/removeUnverifiedAccounts.js";
 import path from "path";
 import { fileURLToPath } from "url";
+// import volunteerPaymentRouter from "./routes/volunteerPaymentRouter.js";
+// import adminPaymentRouter from "./routes/adminPaymentRouter.js";
 
 export const app = express();
 config({ path: "./config.env" });
@@ -38,6 +40,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/volunteer", volunteerRouter);
 app.use("/api/v1/admin", adminRouter);
+// app.use("/api/v1/volunteerPayment", volunteerPaymentRouter);
+// app.use("/api/v1/adminPayment", adminPaymentRouter);
 
 removeUnverifiedAccounts();
 connection();

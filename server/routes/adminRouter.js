@@ -9,7 +9,9 @@ import {
   CountVolunteersAndUsers,
   getAllVolunteers,
   getAllUsers,
-  getCandidateCountPerVolunteer
+  getCandidateCountPerVolunteer,
+  getVolunteerWithUsers,
+  toggleVolunteerBlock,
 } from "../controllers/adminController.js";
 import { isAdminAuthenticated } from "../middlewares/authAdmin.js";
 
@@ -27,13 +29,17 @@ router.post("/password/forgot", forgotPassword); //Admin forgot password
 
 router.put("/password/reset/:token", resetPassword); //Admin reset password
 
-router.get("/volunteers",isAdminAuthenticated, getAllVolunteers) //Get all volunteers -
+router.get("/volunteers",isAdminAuthenticated, getAllVolunteers) //Get all volunteers
 
-router.get("/users",isAdminAuthenticated, getAllUsers) //Get all  users
+router.get("/users",isAdminAuthenticated, getAllUsers) //Get all users
 
 router.get("/count",isAdminAuthenticated, CountVolunteersAndUsers) //Count of volunteer and users
 
-router.get("/volunteer-candidate-count", isAdminAuthenticated, getCandidateCountPerVolunteer); //Get candidate count per volunteer -
+router.get("/volunteer-candidate-count", isAdminAuthenticated, getCandidateCountPerVolunteer); //Count of candidate per volunteer
+
+router.get("/volunteer/:regNumber", getVolunteerWithUsers); //Get volunteer with users
+
+router.put("/volunteer/block/:regNumber", toggleVolunteerBlock); //Toggle volunteer block status
 
 
 export default router;
