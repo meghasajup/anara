@@ -1,6 +1,7 @@
 import ErrorHandler from "../middlewares/error.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import { User } from "../models/userModel.js";
+import { Volunteer } from "../models/volunteerModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
@@ -128,16 +129,24 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerRegNum, pwdCategory, entrepreneurshipInterest, undertaking
+    name, email, phone, password, guardian, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerRegNum, pwdCategory, entrepreneurshipInterest, undertaking, educationQualification
   } = req.body;
 
   try {
-    if (!name || !email || !phone || !password || !guardian || !age || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined || undertaking === undefined) {
+    // Check for required fields
+    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined || undertaking === undefined || !educationQualification) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
-    if (!req.files || !req.files.image || !req.files.educationQualification || !req.files.bankPassbook) {
+    // Check for required documents
+    if (!req.files || !req.files.image || !req.files.educationDocument || !req.files.bankPassbook) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
+    }
+
+    // Validate education qualification
+    const validEducationQualifications = ["5th", "6th", "7th", "8th", "9th", "10th", "ITI"];
+    if (!validEducationQualifications.includes(educationQualification)) {
+      return next(new ErrorHandler("Please select a valid education qualification.", 400));
     }
 
     if (undertaking !== 'true' && undertaking !== true) {
@@ -159,6 +168,13 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
 
+    // Volunteer verification
+    const volunteerExists = await Volunteer.findOne({ tempRegNumber: volunteerRegNum });
+
+    if (!volunteerExists) {
+      return next(new ErrorHandler("Invalid Volunteer Registration Number. Please check and try again.", 400));
+    }
+
     // Ensure regNumber is generated before creating the user
     const lastUser = await User.findOne().sort({ createdAt: -1 }); // Find the last registered user
     const lastRegNumber = lastUser?.regNumber?.split("/")?.pop() || "00000"; // Extract last reg number
@@ -174,7 +190,7 @@ export const register = catchAsyncError(async (req, res, next) => {
 
     // Upload Files to Cloudinary
     const image = await uploadToCloudinary(req.files.image[0].buffer, "users");
-    const educationQualification = await uploadToCloudinary(req.files.educationQualification[0].buffer, "documents");
+    const educationDocument = await uploadToCloudinary(req.files.educationDocument[0].buffer, "documents");
     const bankPassbook = await uploadToCloudinary(req.files.bankPassbook[0].buffer, "documents");
 
     // Police verification optional
@@ -191,7 +207,6 @@ export const register = catchAsyncError(async (req, res, next) => {
       phone,
       password,
       guardian,
-      age,
       address,
       currentAddress,
       dob,
@@ -206,6 +221,7 @@ export const register = catchAsyncError(async (req, res, next) => {
       image,
       policeVerification,
       educationQualification,
+      educationDocument,
       bankPassbook,
       pwdCertificate,
       bplCertificate,
@@ -235,7 +251,8 @@ export const register = catchAsyncError(async (req, res, next) => {
             <div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">
               <p><strong>Name:</strong> ${name}</p>
               <p><strong>Email:</strong> ${email}</p>
-              <p><strong> Registration Number:</strong> ${regNumber}</p>
+              <p><strong>Registration Number:</strong> ${regNumber}</p>
+              <p><strong>Education Qualification:</strong> ${educationQualification}</p>
             </div>
             
             <p>If you have any questions, feel free to reach out to our support team.</p>

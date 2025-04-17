@@ -27,13 +27,13 @@ router.post("/password/forgot", forgotPassword); //Admin forgot password
 
 router.put("/password/reset/:token", resetPassword); //Admin reset password
 
-router.get("/volunteers",isAdminAuthenticated, getAllVolunteers) //Get all volunteers
+router.get("/volunteers",isAdminAuthenticated, getAllVolunteers) //Get all volunteers -
 
 router.get("/users",isAdminAuthenticated, getAllUsers) //Get all  users
 
 router.get("/count",isAdminAuthenticated, CountVolunteersAndUsers) //Count of volunteer and users
 
-router.get("/volunteer-candidate-count", isAdminAuthenticated, getCandidateCountPerVolunteer);
+router.get("/volunteer-candidate-count", isAdminAuthenticated, getCandidateCountPerVolunteer); //Get candidate count per volunteer -
 
 
 export default router;
