@@ -14,6 +14,7 @@ import {
   searchCoursesByJobRole,
   getJobRolesForUser,
   saveSelectedJobRoleAndCourse,
+  checkCourseSelection,
 } from "../controllers/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 import { upload } from "../multer/upload.js";
@@ -58,7 +59,9 @@ router.get("/dashboard/jobroles", isAuthenticated,getJobRolesForUser); //job-rol
 
 router.get("/dashboard/search-courses",isAuthenticated, searchCoursesByJobRole); //search courses
 
-router.post("/dashboard/select", isAuthenticated,saveSelectedJobRoleAndCourse); //select job-roles and course
+router.get("/dashboard/course-selection", isAuthenticated, checkCourseSelection); //Check course selection
+
+router.post("/dashboard/select", isAuthenticated,saveSelectedJobRoleAndCourse); //save select job-roles and course
 
 
 
