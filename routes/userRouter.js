@@ -66,4 +66,3 @@ router.get("/dashboard/course-selection", isAuthenticated, checkCourseSelection)
 
 
 export default router;
-
