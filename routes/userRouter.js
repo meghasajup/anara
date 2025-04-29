@@ -54,11 +54,11 @@ router.get('/ccc-status', isAuthenticated, checkCCCStatus); //Get CCC status
 
 router.post("/update-job-courses", isAuthenticated, updateJobRolesAndCourses); //Update job course
 
-router.get("/dashboard/jobroles", isAuthenticated,getJobRolesForUser); //jobroles
+router.get("/dashboard/jobroles", isAuthenticated,getJobRolesForUser); //job-roles
 
 router.get("/dashboard/search-courses",isAuthenticated, searchCoursesByJobRole); //search courses
 
-router.post("/dashboard/select", isAuthenticated,saveSelectedJobRoleAndCourse); //select jobroles and course
+router.post("/dashboard/select", isAuthenticated,saveSelectedJobRoleAndCourse); //select job-roles and course
 
 
 
