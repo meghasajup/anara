@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadImage, deleteImage, getImages, editImage, uploadFile, deleteFile, getFiles, editFile } from '../controllers/uploadController.js';
+import { uploadImage, deleteImage, getImages, editImage, uploadFile, deleteFile, getFiles, editFile, uploadDocFile, getDocuments } from '../controllers/uploadController.js';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -35,11 +35,14 @@ router.delete('/delete/:public_id(*)', deleteImage);
 router.get('/list', getImages);
 router.put('/edit/:public_id(*)', upload.single('image'), editImage);
 
-// File routes
+// Letter head routes
 router.post('/file-upload', fileUpload.single('file'), uploadFile);
 router.delete('/delete-file/:public_id(*)', deleteFile);
 router.get('/list-files', getFiles);
 router.put('/edit-file/:public_id(*)', fileUpload.single('file'), editFile);
 
+// Document routes
+router.post('/upload-documents',fileUpload.single('documents'), uploadDocFile);
+router.get('/list-documents', getDocuments);
 
 export default router;
