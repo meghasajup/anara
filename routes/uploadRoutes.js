@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { uploadImage, deleteImage, getImages, editImage, uploadFile, deleteFile, getFiles, editFile, uploadDocFile, getDocuments } from '../controllers/uploadController.js';
+import { isAuthenticated } from "../middlewares/auth.js";
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -30,19 +31,19 @@ const upload = multer({
     }
   });
 // Signature routes
-router.post('/upload', upload.single('image'), uploadImage);
-router.delete('/delete/:public_id(*)', deleteImage);
-router.get('/list', getImages);
-router.put('/edit/:public_id(*)', upload.single('image'), editImage);
+router.post('/upload', isAuthenticated,upload.single('image'), uploadImage);
+router.delete('/delete/:public_id(*)', isAuthenticated,deleteImage);
+router.get('/list',isAuthenticated, getImages);
+router.put('/edit/:public_id(*)',isAuthenticated, upload.single('image'), editImage);
 
 // Letter head routes
-router.post('/file-upload', fileUpload.any(), uploadFile);
-router.delete('/delete-file/:public_id(*)', deleteFile);
-router.get('/list-files', getFiles);
-router.put('/edit-file/:public_id(*)', fileUpload.single('file'), editFile);
+router.post('/file-upload', isAuthenticated,fileUpload.any(), uploadFile);
+router.delete('/delete-file/:public_id(*)', isAuthenticated, deleteFile);
+router.get('/list-files',isAuthenticated, getFiles);
+router.put('/edit-file/:public_id(*)',isAuthenticated, fileUpload.single('file'), editFile);
 
 // Document routes
-router.post('/upload-documents',fileUpload.single('documents'), uploadDocFile);
-router.get('/list-documents', getDocuments);
+router.post('/upload-documents',isAuthenticated, fileUpload.single('documents'), uploadDocFile);
+router.get('/list-documents',isAuthenticated,  getDocuments);
 
 export default router;
