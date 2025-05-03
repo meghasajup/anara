@@ -152,26 +152,23 @@ export const uploadFile = async (req, res) => {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
+    const files = req.files;
+    const body = req.body;
     const {subject, body_text, image_id} = req.body;
    
     const file_link = [];
     const publicIds = [];
 
-    for (const file of req.files) {
-      const match = file.fieldname.match(/^files\[(\d+)\]\[file\]$/);
-      const index = match ? match[1] : null;
-
-      if (index === null) continue;
-
-      const nameKey = `files[${index}][name]`;
-      const fileNameFromBody = req.body[nameKey];
-
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const customName = body[`files[${i}][name]`] || file.originalname?.split('.')[0];
+      // console.log(body[`files[${i}][name]`]);
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             folder: 'files',
             resource_type: 'auto',
-            public_id: file.originalname?.split('.')[0] || fileNameFromBody || 'file',
+            public_id: customName
           },
           (error, result) => {
             if (error) return reject(error);
@@ -180,13 +177,12 @@ export const uploadFile = async (req, res) => {
         );
         stream.end(file.buffer);
       });
-
+    
       file_link.push({
         public_id: result.public_id,
         url: result.secure_url,
-        file_name: fileNameFromBody || file.originalname
+        file_name: customName
       });
-
       publicIds.push(result.public_id);
     }
 
