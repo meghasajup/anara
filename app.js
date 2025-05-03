@@ -13,6 +13,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import volunteerPaymentRouter from "./routes/volunteerPaymentRouter.js";
 import uploadRouter from './routes/uploadRoutes.js';
+import letterheadPdfRoutes from './routes/letterheadPdfRoutes.js'
+
 
 export const app = express();
 config({ path: "./config.env" });
@@ -43,8 +45,9 @@ app.use("/api/v1/volunteer", volunteerRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use('/api/v1/payment-requests', volunteerPaymentRouter);
 app.use('/api/v1/admin/payment-requests', adminPaymentRouter);
-app.use('/api/v1/uploads', uploadRouter);
+app.use('/api/v1/admin/uploads', uploadRouter);
 
+app.use('/api/v1/pdf',letterheadPdfRoutes);
 removeUnverifiedAccounts();
 connection();
 
