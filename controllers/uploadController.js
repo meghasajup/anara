@@ -154,14 +154,24 @@ export const uploadFile = async (req, res) => {
 
     const {subject, body_text, image_id} = req.body;
    
-    const fileLinks = [];
+    const file_link = [];
     const publicIds = [];
+
     for (const file of req.files) {
+      const match = file.fieldname.match(/^files\[(\d+)\]\[file\]$/);
+      const index = match ? match[1] : null;
+
+      if (index === null) continue;
+
+      const nameKey = `files[${index}][name]`;
+      const fileNameFromBody = req.body[nameKey];
+
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             folder: 'files',
             resource_type: 'auto',
+            public_id: file.originalname?.split('.')[0] || fileNameFromBody || 'file',
           },
           (error, result) => {
             if (error) return reject(error);
@@ -171,12 +181,17 @@ export const uploadFile = async (req, res) => {
         stream.end(file.buffer);
       });
 
-      fileLinks.push(result.secure_url,);
+      file_link.push({
+        public_id: result.public_id,
+        url: result.secure_url,
+        file_name: fileNameFromBody || file.originalname
+      });
+
       publicIds.push(result.public_id);
     }
 
     const letterHead = await LetterHead.create({
-      file_link: fileLinks,
+      file_link,
       public_id: publicIds,
       image_id: image_id,
       subject: subject,

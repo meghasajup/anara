@@ -36,7 +36,7 @@ router.get('/list', getImages);
 router.put('/edit/:public_id(*)', upload.single('image'), editImage);
 
 // Letter head routes
-router.post('/file-upload', fileUpload.array('files'), uploadFile);
+router.post('/file-upload', fileUpload.any(), uploadFile);
 router.delete('/delete-file/:public_id(*)', deleteFile);
 router.get('/list-files', getFiles);
 router.put('/edit-file/:public_id(*)', fileUpload.single('file'), editFile);
