@@ -573,7 +573,7 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 
 // Create a course
 export const createCourse = catchAsyncError(async (req, res, next) => {
-  const { title, description, jobRoles } = req.body;
+  const { title, description, jobRoles, qualifications } = req.body;
 
   if (!title || !description) {
     return next(new ErrorHandler("Title and description are required.", 400));
@@ -585,7 +585,7 @@ export const createCourse = catchAsyncError(async (req, res, next) => {
 
   try {
     const image = await uploadToCloudinary(req.files.image[0].buffer, "courses");
-    const course = await Course.create({ title, description, image });
+    const course = await Course.create({ title, description, image, qualifications });
 
     if (jobRoles && jobRoles.length > 0) {
       await JobRole.updateMany(
@@ -600,6 +600,7 @@ export const createCourse = catchAsyncError(async (req, res, next) => {
       course
     });
   } catch (error) {
+    console.log(error);
     return next(new ErrorHandler("Failed to create course.", 500));
   }
 });
