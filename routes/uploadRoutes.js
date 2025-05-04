@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { uploadImage, deleteImage, getImages, editImage, uploadFile, deleteFile, getFiles, editFile, uploadDocFile, getDocuments } from '../controllers/uploadController.js';
-import { isAuthenticated } from "../middlewares/auth.js";
+import { isAdminAuthenticated } from "../middlewares/authAdmin.js";
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -31,19 +31,19 @@ const upload = multer({
     }
   });
 // Signature routes
-router.post('/upload', isAuthenticated,upload.single('image'), uploadImage);
-router.delete('/delete/:public_id(*)', isAuthenticated,deleteImage);
-router.get('/list',isAuthenticated, getImages);
-router.put('/edit/:public_id(*)',isAuthenticated, upload.single('image'), editImage);
+router.post('/upload', isAdminAuthenticated,upload.single('image'), uploadImage);
+router.delete('/delete/:public_id(*)', isAdminAuthenticated,deleteImage);
+router.get('/list',isAdminAuthenticated, getImages);
+router.put('/edit/:public_id(*)',isAdminAuthenticated, upload.single('image'), editImage);
 
 // Letter head routes
-router.post('/file-upload', isAuthenticated,fileUpload.any(), uploadFile);
-router.delete('/delete-file/:public_id(*)', isAuthenticated, deleteFile);
-router.get('/list-files',isAuthenticated, getFiles);
-router.put('/edit-file/:public_id(*)',isAuthenticated, fileUpload.single('file'), editFile);
+router.post('/file-upload', isAdminAuthenticated,fileUpload.any(), uploadFile);
+router.delete('/delete-file/:public_id(*)', isAdminAuthenticated, deleteFile);
+router.get('/list-files',isAdminAuthenticated, getFiles);
+router.put('/edit-file/:public_id(*)',isAdminAuthenticated, fileUpload.single('file'), editFile);
 
 // Document routes
-router.post('/upload-documents',isAuthenticated, fileUpload.single('documents'), uploadDocFile);
-router.get('/list-documents',isAuthenticated,  getDocuments);
+router.post('/upload-documents',isAdminAuthenticated, fileUpload.single('documents'), uploadDocFile);
+router.get('/list-documents',isAdminAuthenticated,  getDocuments);
 
 export default router;
