@@ -12,6 +12,11 @@ const CourseSchema = new mongoose.Schema({
   image: {
     type: String,
     required: [true, "Course image is required"],
+  },
+  qualifications: {
+    type: String,
+    required: [true, "Education qualification is required"],
+    enum: ["5th", "6th", "7th", "8th", "9th", "10th", "ITI"]
   }
 }, {
   timestamps: true

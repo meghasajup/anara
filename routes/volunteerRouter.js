@@ -7,6 +7,8 @@ import {
   logout,
   forgotPassword,
   resetPassword,
+  // generateTemporaryRegNumber,
+  // approveEmail,
   getVolunteer,
   getUsersUnderVolunteer
 } from "../controllers/volunteerController.js";
@@ -19,6 +21,10 @@ router.post("/send-email-otp", sendEmailOTP); //OTP for email verification
 
 router.post("/verify-email-otp", verifyEmailOTP); //Verify OTP for email verification
 
+// router.post("/generate-temp-reg", generateTemporaryRegNumber); //Generate temporary registration number
+
+// router.get('/approve', approveEmail) //Approve email
+
 router.post("/register", upload.fields([
   { name: "image", maxCount: 1 },
   { name: "undertaking", maxCount: 1 },
@@ -29,14 +35,15 @@ router.post("/register", upload.fields([
 
 router.post("/login", login); //Login user
 
+
 router.get("/logout", isVolunteerAuthenticated, logout); //Logout user
 
-router.get("/me", isVolunteerAuthenticated, getVolunteer); //Get Volunteer information
+router.get("/me", isVolunteerAuthenticated, getVolunteer); //Get user information
 
 router.post("/forgot-password", forgotPassword); //Forgot password
 
 router.put("/reset-password/:token", resetPassword); //Reset password with token
 
-router.get("/usersdetails",isVolunteerAuthenticated, getUsersUnderVolunteer); //User details
+router.get("/usersdetails",isVolunteerAuthenticated, getUsersUnderVolunteer);
 
 export default router;

@@ -53,15 +53,15 @@ router.post("/update-ccc-status", isAuthenticated,upload.fields([{ name: "cccCer
 
 router.get('/ccc-status', isAuthenticated, checkCCCStatus); //Get CCC status
 
-router.get("/dashboard/courses", isAuthenticated,getCoursesForUser); //Courses
+router.get("/courses", isAuthenticated,getCoursesForUser); //Courses
 
-router.get("/dashboard/search-courses",isAuthenticated, searchCourses); //Search courses
+router.get("/search-courses",isAuthenticated, searchCourses); //Search courses
 
-router.post("/dashboard/select", isAuthenticated,selectCourse); //Select course
+router.post("/select", isAuthenticated,selectCourse); //Select course
 
 router.post("/update-job-courses", isAuthenticated, updateCourses); //Update job-roles and course
 
-router.get("/dashboard/course-selection", isAuthenticated, checkCourseSelection); //Check course selection
+router.get("/course-selection", isAuthenticated, checkCourseSelection); //Check course selection
 
 
 

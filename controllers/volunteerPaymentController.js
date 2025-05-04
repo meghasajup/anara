@@ -1,17 +1,16 @@
 import { PaymentRequest } from '../models/paymentModel.js';
 import { Volunteer } from '../models/volunteerModel.js';
 
+//Create payment
 export const createPaymentRequest = async (req, res) => {
     try {
         const volunteerId = req.volunteer.id; 
 
-        // Find the volunteer to get their registration number
         const volunteer = await Volunteer.findById(volunteerId);
         if (!volunteer) {
             return res.status(404).json({ message: 'Volunteer not found' });
         }
 
-        // Create a new payment request
         const newPaymentRequest = new PaymentRequest({
             volunteer: volunteerId,
             volunteerRegNumber: volunteer.tempRegNumber,
@@ -36,6 +35,11 @@ export const createPaymentRequest = async (req, res) => {
     }
 };
 
+
+
+
+
+//Get volunteer payment
 export const getVolunteerPaymentRequests = async (req, res) => {
     try {
         const volunteerId = req.volunteer.id;

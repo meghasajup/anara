@@ -1,5 +1,7 @@
 import { PaymentRequest } from '../models/paymentModel.js';
 
+
+//Get all payment request
 export const getAllPaymentRequests = async (req, res) => {
     try {
         const { status } = req.query;
@@ -26,6 +28,11 @@ export const getAllPaymentRequests = async (req, res) => {
     }
 };
 
+
+
+
+
+//Approve payment
 export const approvePaymentRequest = async (req, res) => {
     try {
         const { requestId } = req.params;
@@ -37,7 +44,6 @@ export const approvePaymentRequest = async (req, res) => {
             return res.status(404).json({ message: 'Payment request not found' });
         }
 
-        // Check if admin has already approved this request
         const alreadyApproved = paymentRequest.approvals.some(
             approval => approval.admin.toString() === adminId
         );
@@ -49,10 +55,8 @@ export const approvePaymentRequest = async (req, res) => {
             });
         }
 
-        // Add this admin's approval
         paymentRequest.approvals.push({ admin: adminId });
 
-        // Check if we have at least 3 approvals now
         if (paymentRequest.approvals.length >= 3 && paymentRequest.status === 'pending') {
             paymentRequest.status = 'approved';
         }
@@ -76,6 +80,11 @@ export const approvePaymentRequest = async (req, res) => {
     }
 };
 
+
+
+
+
+//Reject payment
 export const rejectPaymentRequest = async (req, res) => {
     try {
         const { requestId } = req.params;
@@ -94,9 +103,7 @@ export const rejectPaymentRequest = async (req, res) => {
             });
         }
 
-        // Update status to rejected
         paymentRequest.status = 'rejected';
-        // Add a rejection note if provided
         if (req.body.rejectionReason) {
             paymentRequest.rejectionReason = req.body.rejectionReason;
         }
@@ -118,6 +125,11 @@ export const rejectPaymentRequest = async (req, res) => {
     }
 };
 
+
+
+
+
+//Mark paid
 export const markAsPaid = async (req, res) => {
     try {
         const { requestId } = req.params;
@@ -136,7 +148,6 @@ export const markAsPaid = async (req, res) => {
             });
         }
 
-        // Update payment details
         paymentRequest.status = 'paid';
         paymentRequest.razorpayPaymentId = razorpayPaymentId;
         paymentRequest.razorpayOrderId = razorpayOrderId;
