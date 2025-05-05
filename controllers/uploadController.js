@@ -175,8 +175,7 @@ export const uploadFile = async (req, res) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             folder: 'files',
-            resource_type: 'auto',
-            public_id: customName
+            resource_type: 'auto'
           },
           (error, result) => {
             if (error) return reject(error);
@@ -254,7 +253,7 @@ export const deleteFile = async (req, res) => {
 
 export const getFiles = async (req, res) => {
 try {
-  const files = await LetterHead.find().select("file_link image_id public_id subject body_text -_id");
+  const files = await LetterHead.find().select("file_link image_id public_id subject body_text");
 
   return res.status(200).json({ files });
 } catch (error) {
@@ -266,57 +265,80 @@ try {
 };
 
 export const editFile = async (req, res) => {
-const { public_id } = req.params;
+  const { id } = req.params;
+  const { file_name, subject, body_text } = req.body;
 
-try {
+  try {
+    const letterHead = await LetterHead.findById(id);
+    if (!letterHead) {
+      return res.status(404).json({ message: "Document not found" });
+    }
 
-  const oldFile = await LetterHead.findOne({  public_id });
-
-  if (!oldFile) {
-    return res.status(404).json({ message: "File not found" });
-  }
-  // Step 1: Delete the old file
-  await cloudinary.uploader.destroy(public_id);
-
-  // Step 2: Upload new file
-  const file = req.file;
-  if (!file) {
-    return res.status(400).json({ message: "No file provided" });
-  }
-
-  // Step 4: Upload new file
-  const result = await new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: "files",
-        resource_type: "auto",
-      },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      }
+    const normalizedInputName = file_name.toLowerCase().trim();
+    const fileIndex = letterHead.file_link.findIndex(f => 
+      f.file_name.toLowerCase().trim() === normalizedInputName
     );
-    stream.end(req.file.buffer);
-  });
 
-  // Step 5: Update database record
-  oldFile.file_link = result.secure_url;
-  oldFile.public_id = result.public_id;
-  if (req.body.subject) oldFile.subject = req.body.subject;
-  if (req.body.body_text) oldFile.body_text = req.body.body_text;
-  await oldFile.save();
+    if (fileIndex === -1) {
+      return res.status(404).json({ message: "File not found in file_link" });
+    }
 
-  return res.status(200).json({
-    message: "File updated successfully",
-    data: oldFile,
-  });
+    const oldFile = letterHead.file_link[fileIndex];
+    const oldPublicId = oldFile.public_id;
 
-} catch (error) {
-  return res.status(500).json({
-    message: "Something went wrong",
-    error: error.message,
-  });
-}
+    // Step 1: Delete from Cloudinary
+    await cloudinary.uploader.destroy(oldPublicId);
+
+    const file = req.files && req.files[0];
+    console.log("Incoming body:", req.body);
+
+    const uploadedFileName = req.body.files?.[0]?.name || file.originalname;
+
+    console.log(uploadedFileName);
+    if (!file || !file.buffer || file.buffer.length === 0) {
+      return res.status(400).json({ message: "No file provided or file is empty" });
+    }
+
+        // console.log(file);
+
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: "files", resource_type: "auto" },
+        (err, result) => {
+          if (err) return reject(err);
+          resolve(result);
+        }
+      ).end(file.buffer);
+    });
+
+    // Step 3: Update file_link entry
+    letterHead.file_link[fileIndex] = {
+      public_id: uploadResult.public_id,
+      url: uploadResult.secure_url,
+      file_name: uploadedFileName || file.originalname,
+    };
+    
+
+    // Optional: update other fields
+    if (subject) letterHead.subject = subject;
+    if (body_text) letterHead.body_text = body_text;
+
+    await letterHead.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "File updated successfully",
+      data: letterHead
+    });
+
+  } catch (error) {
+    console.error("editFile error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
 };
 
 export const uploadDocFile = async (req, res) => {
