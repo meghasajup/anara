@@ -91,7 +91,7 @@ export const getImages = async (req, res) => {
   
 export const editImage = async (req, res) => {
   const { public_id } = req.params;
-
+  const {name} = req.body;
   try {
 
     // Step 1: Find the image in the database by its public_id
@@ -101,41 +101,49 @@ export const editImage = async (req, res) => {
       return res.status(404).json({ message: "Signature not found" });
     }
 
-    // Step 2: Delete the old image from Cloudinary
-    const cloudinaryResult = await cloudinary.uploader.destroy(public_id);
-    if (cloudinaryResult.result !== "ok") {
-      return res.status(500).json({ message: "Failed to delete old image from Cloudinary" });
-    }
-
-    // Step 3: Upload the new image to Cloudinary
     const file = req.file;
-    if (!file) {
-      return res.status(400).json({ message: "No file provided" });
+
+    // If a new image is uploaded, replace it
+    if (file) {
+      // Delete the old image from Cloudinary
+      const cloudinaryResult = await cloudinary.uploader.destroy(public_id);
+      if (cloudinaryResult.result !== "ok") {
+        return res.status(500).json({ message: "Failed to delete old image from Cloudinary" });
+      }
+
+      // Upload the new image to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "signatures",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(file.buffer);
+      });
+
+      signature.url = result.secure_url;
+      signature.public_id = result.public_id;
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: "signatures",
-          resource_type: "image",
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        }
-      );
-      stream.end(file.buffer);
-    });
-
-    // Step 4: Update the Signature table with the new image URL and public_id
-    signature.url = result.secure_url;
-    signature.public_id = result.public_id;
+    // Update name if provided
+    if (name) {
+      signature.name = name;
+    }
 
     await signature.save(); 
+  
     return res.status(200).json({
-      message: "Image replaced successfully",
-      url: result.secure_url,
-      public_id: result.public_id,
+      message: "Signature updated successfully",
+      data: {
+        url: signature.url,
+        public_id: signature.public_id,
+        name: signature.name,
+      },
     });
 
   } catch (error) {
