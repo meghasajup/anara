@@ -611,7 +611,7 @@ export const createCourse = catchAsyncError(async (req, res, next) => {
 //Update course
 export const updateCourse = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const { title, description, jobRoles } = req.body;
+  const { title, description, jobRoles, qualifications } = req.body;
 
   const course = await Course.findById(id);
   if (!course) {
@@ -620,12 +620,17 @@ export const updateCourse = catchAsyncError(async (req, res, next) => {
 
   if (title) course.title = title;
   if (description) course.description = description;
+  if (qualifications) course.qualifications = qualifications;
 
   if (req.files && req.files.image) {
     try {
+      const url = course.image;
+      const public_id = url.split('/').slice(-2).join('/').split('.')[0]; // signatures/sample-image
+      await cloudinaryInstance.uploader.destroy(public_id);
       const image = await uploadToCloudinary(req.files.image[0].buffer, "courses");
       course.image = image;
     } catch (error) {
+      console.log(error);
       return next(new ErrorHandler("Failed to upload image.", 500));
     }
   }
@@ -715,7 +720,11 @@ export const deleteCourse = catchAsyncError(async (req, res, next) => {
   if (!course) {
     return next(new ErrorHandler("Course not found", 404));
   }
+  const url = course.image;
+  const public_id = url.split('/').slice(-2).join('/').split('.')[0]; // signatures/sample-image
 
+  await cloudinaryInstance.uploader.destroy(public_id);
+  
   // Remove this course from all job roles that have it
   await JobRole.updateMany(
     { courses: course._id },
