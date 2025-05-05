@@ -25,35 +25,40 @@ export const generateLetterheadPDF = async (req, res) => {
         
         // Generate PDF buffer
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        
         await browser.close();
         
-        // Ensure tmp directory exists
+        // 1. Check if PDF buffer is empty
+        if (!pdfBuffer || pdfBuffer.length === 0) {
+          throw new Error("Generated PDF buffer is empty");
+        }
+        
+        // 2. Save PDF to local temp path
         const tmpDir = path.resolve('./tmp');
         await fs.mkdir(tmpDir, { recursive: true });
-        
-        // Save PDF to temp file
-        const tempPath = path.join(tmpDir, `${Date.now()}.pdf`);
+
+        const tempPath = path.join(tmpDir, `${Date.now()}-letterhead.pdf`);
         await fs.writeFile(tempPath, pdfBuffer);
-        
-        // Upload PDF to Cloudinary
+
+        // 3. Upload to Cloudinary
         const uploadResult = await cloudinaryInstance.uploader.upload(tempPath, {
-            resource_type: "raw", // For PDFs
-            folder: "letterheads"
+            resource_type: "raw", // raw for non-image like PDF
+            folder: "letterheads",
         });
-        
-        // Clean up temp file
+  
+        // 4. Delete local temp file
         await fs.unlink(tempPath);
-        
+      
+
         // Store PDF metadata in the database
         const pdfRecord = await PDFFile.create({
             subject,             // Subject of the letterhead
             cloudinary_url: uploadResult.secure_url,  // URL of the uploaded PDF
             public_id: uploadResult.public_id  // Cloudinary's unique public ID
         });
-        
+
         // Return the PDF URL in the response
         res.status(201).json({ message: 'PDF generated', url: uploadResult.secure_url });
+        // res.status(201).json({ message: 'PDF generated', url: tempPath });
     } catch (err) {
         console.error("❌ PDF Generation Error:", err);
         res.status(500).json({ error: "Failed to generate PDF" });
