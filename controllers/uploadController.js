@@ -216,29 +216,48 @@ export const uploadFile = async (req, res) => {
 };
 
 export const deleteFile = async (req, res) => {
-  const { public_id } = req.params;
-
+  const { id } = req.params;
+  const { public_id } = req.body;
+ console.log(id, public_id);
   try {
+    const letterHead = await LetterHead.findById(id);
+
+    if (!letterHead) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    // Find index of the file in the file_link array
+    const fileIndex = letterHead.file_link.findIndex(
+      (f) => f.public_id === public_id
+    );
+
+    if (fileIndex === -1) {
+      return res.status(404).json({ message: "File not found in file_link" });
+    }
+
     // Step 1: Delete from Cloudinary
     const cloudinaryResult = await cloudinary.uploader.destroy(public_id);
 
     if (cloudinaryResult.result !== "ok") {
-      return res.status(404).json({
+      return res.status(400).json({
         message: "File not found on Cloudinary or already deleted",
       });
     }
 
-    // Step 2: Delete from MongoDB
-    const deletedFile = await LetterHead.findOneAndDelete({ public_id });
+    // Step 2: Remove from file_link array
+    letterHead.file_link.splice(fileIndex, 1);
 
-    if (!deletedFile) {
-      return res.status(404).json({
-        message: "File record not found in database",
-      });
-    }
+    // Step 3: Remove from public_id array (if stored separately)
+    letterHead.public_id = letterHead.public_id.filter(
+      (pid) => pid !== public_id
+    );
+
+    // Step 4: Save the document
+    await letterHead.save();
 
     return res.status(200).json({
-      message: "File deleted successfully from both Cloudinary and database",
+      message: "File deleted successfully from Cloudinary and document",
+      data: letterHead,
     });
 
   } catch (error) {
@@ -266,7 +285,7 @@ try {
 
 export const editFile = async (req, res) => {
   const { id } = req.params;
-  const { file_name, subject, body_text } = req.body;
+  const { file_name, subject, body_text, image_id } = req.body;
 
   try {
     const letterHead = await LetterHead.findById(id);
@@ -322,6 +341,7 @@ export const editFile = async (req, res) => {
     // Optional: update other fields
     if (subject) letterHead.subject = subject;
     if (body_text) letterHead.body_text = body_text;
+    if (image_id) letterHead.image_id = image_id;
 
     await letterHead.save();
 
