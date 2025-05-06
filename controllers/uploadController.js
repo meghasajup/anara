@@ -217,8 +217,7 @@ export const uploadFile = async (req, res) => {
 
 export const deleteFile = async (req, res) => {
   const { id } = req.params;
-  const { public_id } = req.body;
- console.log(id, public_id);
+
   try {
     const letterHead = await LetterHead.findById(id);
 
@@ -226,38 +225,18 @@ export const deleteFile = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    // Find index of the file in the file_link array
-    const fileIndex = letterHead.file_link.findIndex(
-      (f) => f.public_id === public_id
-    );
-
-    if (fileIndex === -1) {
-      return res.status(404).json({ message: "File not found in file_link" });
+    // Step 1: Delete all files from Cloudinary
+    for (const file of letterHead.file_link) {
+      if (file.public_id) {
+        await cloudinary.uploader.destroy(file.public_id);
+      }
     }
 
-    // Step 1: Delete from Cloudinary
-    const cloudinaryResult = await cloudinary.uploader.destroy(public_id);
-
-    if (cloudinaryResult.result !== "ok") {
-      return res.status(400).json({
-        message: "File not found on Cloudinary or already deleted",
-      });
-    }
-
-    // Step 2: Remove from file_link array
-    letterHead.file_link.splice(fileIndex, 1);
-
-    // Step 3: Remove from public_id array (if stored separately)
-    letterHead.public_id = letterHead.public_id.filter(
-      (pid) => pid !== public_id
-    );
-
-    // Step 4: Save the document
-    await letterHead.save();
+    // Step 2: Delete the document from MongoDB
+    await LetterHead.findByIdAndDelete(id);
 
     return res.status(200).json({
-      message: "File deleted successfully from Cloudinary and document",
-      data: letterHead,
+      message: "Letterhead and associated files deleted successfully",
     });
 
   } catch (error) {
