@@ -23,10 +23,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+const allowedOrigins = [
+  "https://digi-colab-roan.vercel.app",
+  "https://skills.anaraskills.org"
+];
 app.use(
   cors({
-    origin: "https://digi-colab-roan.vercel.app", // Your frontend URL
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    }, // Your frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and authorization headers
   })
