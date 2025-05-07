@@ -25,7 +25,8 @@ const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const allowedOrigins = [
   "https://digi-colab-roan.vercel.app",
-  "https://skills.anaraskills.org"
+  "https://skills.anaraskills.org",
+  "http://localhost:4000",
 ];
 app.use(
   cors({
