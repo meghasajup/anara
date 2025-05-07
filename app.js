@@ -27,6 +27,7 @@ const allowedOrigins = [
   "https://digi-colab-roan.vercel.app",
   "https://skills.anaraskills.org",
   "http://localhost:4000",
+  "http://localhost:3000",
 ];
 app.use(
   cors({
