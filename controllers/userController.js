@@ -26,8 +26,8 @@ export const sendEmailOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Email is already registered.", 400));
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000); 
-  const otpExpire = Date.now() + 5 * 60 * 1000; 
+  const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
+  const otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
 
   otpStore.set(email, { otp, otpExpire });
 
@@ -99,6 +99,7 @@ export const verifyEmailOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Invalid OTP.", 400));
   }
 
+  // Mark OTP as verified
   otpStore.set(email, { verified: true });
   res.status(200).json({
     success: true,
@@ -134,14 +135,17 @@ export const register = catchAsyncError(async (req, res, next) => {
   } = req.body;
 
   try {
+    // Check for required fields
     if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined || undertaking === undefined || !educationQualification) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
+    // Check for required documents
     if (!req.files || !req.files.image || !req.files.educationDocument || !req.files.bankPassbook) {
       return next(new ErrorHandler("All required documents must be uploaded.", 400));
     }
 
+    // Validate education qualification
     const validEducationQualifications = ["5th", "6th", "7th", "8th", "9th", "10th", "ITI"];
     if (!validEducationQualifications.includes(educationQualification)) {
       return next(new ErrorHandler("Please select a valid education qualification.", 400));
@@ -166,16 +170,19 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Email or phone is already registered.", 400));
     }
 
+    // Volunteer verification
     const volunteerExists = await Volunteer.findOne({ tempRegNumber: volunteerRegNum });
 
     if (!volunteerExists) {
       return next(new ErrorHandler("Invalid Volunteer Registration Number. Please check and try again.", 400));
     }
 
-    const lastUser = await User.findOne().sort({ createdAt: -1 }); 
-    const lastRegNumber = lastUser?.regNumber?.split("/")?.pop() || "00000"; 
+    // Ensure regNumber is generated before creating the user
+    const lastUser = await User.findOne().sort({ createdAt: -1 }); // Find the last registered user
+    const lastRegNumber = lastUser?.regNumber?.split("/")?.pop() || "00000"; // Extract last reg number
     const regNumber = `ASF/CANDIDATE/${String(Number(lastRegNumber) + 1).padStart(5, "0")}`;
 
+    // Debugging: Check if regNumber is null
     console.log("Generated regNumber:", regNumber);
 
     if (!regNumber) {
@@ -183,10 +190,12 @@ export const register = catchAsyncError(async (req, res, next) => {
     }
     const validBankAccNumber = bankAccNumber && bankAccNumber.trim() !== "" ? bankAccNumber : "Not Provided";
 
+    // Upload Files to Cloudinary
     const image = await uploadToCloudinary(req.files.image[0].buffer, "users");
     const educationDocument = await uploadToCloudinary(req.files.educationDocument[0].buffer, "documents");
     const bankPassbook = await uploadToCloudinary(req.files.bankPassbook[0].buffer, "documents");
 
+    // Police verification optional
     const policeVerification = req.files.policeVerification
       ? await uploadToCloudinary(req.files.policeVerification[0].buffer, "documents")
       : null;
@@ -222,17 +231,18 @@ export const register = catchAsyncError(async (req, res, next) => {
       regNumber,
     });
 
+    // Send registration confirmation email to the user
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "hasanulbanna2255@gmail.com",
-          pass: "wflv nsjo ofba rvov",
+          user: "contactus@anaraskills.org",
+          pass: "zcqs pmzb oahp msgl",
         },
       });
 
       const mailOptions = {
-        from: "hasanulbanna2255@gmail.com",
+        from: "contactus@anaraskills.org",
         to: email,
         subject: "Welcome to Anara Skills Foundation - Your Registration is Successful!",
         html: `
@@ -486,9 +496,10 @@ export const getCoursesForUser = catchAsyncError(async (req, res, next) => {
       .select("name description courses")
       .populate({
         path: "courses",
-        select: "title description duration qualifications image", 
+        select: "title description duration qualifications image", // include qualification for filtering
       });
 
+    // Filter courses based on qualification
     const filteredJobRoles = jobRoles
     .map(role => {
       const eligibleCourses = role.courses.filter(course => {
@@ -504,8 +515,6 @@ export const getCoursesForUser = catchAsyncError(async (req, res, next) => {
 
     res.status(200).json({ success: true, jobRoles: filteredJobRoles });
   });
-
-
 
 
 
@@ -530,7 +539,6 @@ export const searchCourses = catchAsyncError(async (req, res, next) => {
     courses,
   });
 });
-
 
 
 
@@ -566,7 +574,6 @@ export const selectCourse = catchAsyncError(async (req, res, next) => {
 
 
 
-
 //Update course
 export const updateCourses = catchAsyncError(async (req, res, next) => {
   const { courseId } = req.body;
@@ -581,6 +588,7 @@ export const updateCourses = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("User not found", 404));
   }
 
+  // Validate and update courseId
   const courseExists = await Course.findById(courseId);
   if (!courseExists) {
     return next(new ErrorHandler("Invalid course ID", 400));
@@ -598,7 +606,6 @@ export const updateCourses = catchAsyncError(async (req, res, next) => {
 
 
 
-
 // Updated to check only selected course
 export const checkCourseSelection = catchAsyncError(async (req, res, next) => {
   const user = req.user;
@@ -607,8 +614,10 @@ export const checkCourseSelection = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("User not found", 404));
   }
 
+  // Check if user has selected a course
   const hasSelectedCourse = user.selectedCourse ? true : false;
 
+  // Get more details about the selected course if it exists
   let courseDetails = null;
   if (hasSelectedCourse) {
     courseDetails = await Course.findById(user.selectedCourse).select("name description duration level");

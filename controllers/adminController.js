@@ -106,7 +106,6 @@ export const logout = catchAsyncError(async (req, res, next) => {
 
 
 
-
 //GetAdmin
 export const getadmin = catchAsyncError(async (req, res, next) => {
   const admin = req.admin;
@@ -115,6 +114,7 @@ export const getadmin = catchAsyncError(async (req, res, next) => {
     admin
   });
 });
+
 
 
 
@@ -130,11 +130,14 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Admin not found.", 404));
   }
 
+  // Generate reset password token
   const resetToken = admin.generateResetPasswordToken();
   await admin.save({ validateBeforeSave: false });
 
+  // Create reset password URL
   const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
 
+  // Message to be sent to the user
   const message = `Your Reset Password Token is: \n\n ${resetPasswordUrl} \n\n If you did not request this, please ignore this email.`;
 
   try {
@@ -169,6 +172,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Token is missing.", 400));
   }
 
+  // Hash the token from the URL to match with the stored token in the database
   const resetPasswordToken = crypto
     .createHash("sha256")
     .update(token)
@@ -176,7 +180,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
 
   const admin = await Admin.findOne({
     resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() }, 
+    resetPasswordExpire: { $gt: Date.now() }, // Ensure token has not expired
   });
 
   if (!admin) {
@@ -193,12 +197,14 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Passwords do not match.", 400));
   }
 
+  // Update password and remove reset token from database
   admin.password = password;
   admin.resetPasswordToken = undefined;
   admin.resetPasswordExpire = undefined;
 
   await admin.save();
 
+  // Send success response and token
   adminToken(admin, 200, "Password reset successfully.", res);
 });
 
@@ -222,6 +228,7 @@ export const getAllVolunteers = catchAsyncError(async (req, res, next) => {
             tempRegNumber: volunteer.tempRegNumber,
             isBlocked: volunteer.isBlocked,
             email: volunteer.email
+            // Add more fields as needed
           },
           userCount,
         };
@@ -242,13 +249,16 @@ export const getAllVolunteers = catchAsyncError(async (req, res, next) => {
 
 
 
+
+
 //Get all users in Admin Dashboard
 export const getAllUsers = catchAsyncError(async (req, res, next) => {
   try {
-    const users = await User.find({});
+    const users = await User.find({}); // Add filter if needed
 
     const userData = await Promise.all(
       users.map(async (user) => {
+        // Get volunteer if you want to populate volunteer info
         const volunteer = await Volunteer.findOne({ tempRegNumber: user.volunteerRegNum });
 
         return {
@@ -261,6 +271,7 @@ export const getAllUsers = catchAsyncError(async (req, res, next) => {
             regNumber: user.regNumber,
             isBlocked: user.isBlocked,
             createdAt: user.createdAt,
+            // Add more user fields as needed
           },
           volunteerInfo: volunteer
             ? {
@@ -289,10 +300,13 @@ export const getAllUsers = catchAsyncError(async (req, res, next) => {
 // Count of users and volunteers
 export const CountVolunteersAndUsers = catchAsyncError(async (req, res, next) => {
   try {
+    // Get count of volunteers
     const volunteerCount = await Volunteer.countDocuments();
 
+    // Get count of users
     const userCount = await User.countDocuments();
 
+    // Return the counts
     res.status(200).json({
       success: true,
       volunteerCount,
@@ -320,8 +334,8 @@ export const getCandidateCountPerVolunteer = catchAsyncError(async (req, res, ne
       {
         $lookup: {
           from: "volunteers",
-          localField: "_id", 
-          foreignField: "tempRegNumber", 
+          localField: "_id", // volunteerRegNum from User
+          foreignField: "tempRegNumber", // match with Volunteer.regNumber
           as: "volunteerDetails",
         },
       },
@@ -360,14 +374,17 @@ export const getVolunteerWithUsers = catchAsyncError(async (req, res, next) => {
   try {
     const { regNumber } = req.params;
 
+    // Step 1: Find the volunteer using tempRegNumber
     const volunteer = await Volunteer.findOne({ tempRegNumber: regNumber });
 
     if (!volunteer) {
       return next(new ErrorHandler("Volunteer not found", 404));
     }
 
+    // Step 2: Find all users registered under this volunteer's regNumber
     const users = await User.find({ volunteerRegNum: volunteer.tempRegNumber });
 
+    // Step 3: Return response with volunteer and users
     res.status(200).json({
       success: true,
       volunteerDetails: volunteer,
@@ -387,8 +404,8 @@ export const getVolunteerWithUsers = catchAsyncError(async (req, res, next) => {
 //Toggle volunteer block
 export const toggleVolunteerBlock = catchAsyncError(async (req, res, next) => {
   try {
-    const { regNumber } = req.params;      
-    const { block } = req.body;            
+    const { regNumber } = req.params;      // regNumber from URL
+    const { block } = req.body;            // true to block, false to unblock
 
     const volunteer = await Volunteer.findOne({ tempRegNumber: regNumber });
 
@@ -396,9 +413,11 @@ export const toggleVolunteerBlock = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Volunteer not found", 404));
     }
 
+    // Update block status based on request
     volunteer.isBlocked = block;
     await volunteer.save();
 
+    // Send response based on the block status
     const action = block ? 'blocked' : 'unblocked';
     res.status(200).json({
       success: true,
@@ -441,8 +460,8 @@ export const getUserByRegNumber = catchAsyncError(async (req, res, next) => {
 //Toggle user block
 export const toggleUserBlock = catchAsyncError(async (req, res, next) => {
   try {
-    const { regNumber } = req.params;     
-    const { block } = req.body;           
+    const { regNumber } = req.params;     // regNumber from URL
+    const { block } = req.body;           // true to block, false to unblock
 
     const user = await User.findOne({ regNumber });
 
@@ -490,13 +509,11 @@ export const createJobRole = catchAsyncError(async (req, res, next) => {
 
 
 
-
 // Get all job roles with course details
 export const getJobRoles = catchAsyncError(async (req, res, next) => {
   const roles = await JobRole.find().populate('courses');
   res.status(200).json({ success: true, roles });
 });
-
 
 
 
@@ -554,10 +571,6 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
   });
 };
 
-
-
-
-
 // Create a course
 export const createCourse = catchAsyncError(async (req, res, next) => {
   const { title, description, jobRoles, qualifications } = req.body;
@@ -595,11 +608,10 @@ export const createCourse = catchAsyncError(async (req, res, next) => {
 
 
 
-
 //Update course
 export const updateCourse = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const { title, description, jobRoles } = req.body;
+  const { title, description, jobRoles, qualifications } = req.body;
 
   const course = await Course.findById(id);
   if (!course) {
@@ -608,12 +620,17 @@ export const updateCourse = catchAsyncError(async (req, res, next) => {
 
   if (title) course.title = title;
   if (description) course.description = description;
+  if (qualifications) course.qualifications = qualifications;
 
   if (req.files && req.files.image) {
     try {
+      const url = course.image;
+      const public_id = url.split('/').slice(-2).join('/').split('.')[0]; // signatures/sample-image
+      await cloudinaryInstance.uploader.destroy(public_id);
       const image = await uploadToCloudinary(req.files.image[0].buffer, "courses");
       course.image = image;
     } catch (error) {
+      console.log(error);
       return next(new ErrorHandler("Failed to upload image.", 500));
     }
   }
@@ -639,7 +656,6 @@ export const updateCourse = catchAsyncError(async (req, res, next) => {
     message: "Course updated successfully",
   });
 });
-
 
 
 
@@ -699,11 +715,17 @@ export const getCourses = catchAsyncError(async (req, res, next) => {
 export const deleteCourse = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
 
+  // Find the course
   const course = await Course.findById(id);
   if (!course) {
     return next(new ErrorHandler("Course not found", 404));
   }
+  const url = course.image;
+  const public_id = url.split('/').slice(-2).join('/').split('.')[0]; // signatures/sample-image
 
+  await cloudinaryInstance.uploader.destroy(public_id);
+  
+  // Remove this course from all job roles that have it
   await JobRole.updateMany(
     { courses: course._id },
     { $pull: { courses: course._id } }

@@ -38,9 +38,9 @@ router.put('/edit/:public_id(*)',isAdminAuthenticated, upload.single('image'), e
 
 // Letter head routes
 router.post('/file-upload', isAdminAuthenticated,fileUpload.any(), uploadFile);
-router.delete('/delete-file/:public_id(*)', isAdminAuthenticated, deleteFile);
+router.delete('/delete-file/:id',isAdminAuthenticated, deleteFile);
 router.get('/list-files',isAdminAuthenticated, getFiles);
-router.put('/edit-file/:public_id(*)',isAdminAuthenticated, fileUpload.single('file'), editFile);
+router.put('/edit-file/:id', isAdminAuthenticated,fileUpload.any(), editFile);
 
 // Document routes
 router.post('/upload-documents',isAdminAuthenticated, fileUpload.single('documents'), uploadDocFile);

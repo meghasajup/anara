@@ -23,10 +23,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+const allowedOrigins = [
+  "https://digi-colab-roan.vercel.app",
+  "https://skills.anaraskills.org",
+  "http://localhost:4000",
+  "http://localhost:3000",
+];
 app.use(
   cors({
-    origin: "https://digi-colab-roan.vercel.app", // Your frontend URL
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    }, // Your frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and authorization headers
   })
@@ -45,9 +56,9 @@ app.use("/api/v1/volunteer", volunteerRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use('/api/v1/payment-requests', volunteerPaymentRouter);
 app.use('/api/v1/admin/payment-requests', adminPaymentRouter);
-app.use('/api/v1/uploads', uploadRouter);
-app.use('/api/v1/pdf',letterheadPdfRoutes);
+app.use('/api/v1/admin/uploads', uploadRouter);
 
+app.use('/api/v1/admin/pdf',letterheadPdfRoutes);
 removeUnverifiedAccounts();
 connection();
 

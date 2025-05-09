@@ -216,13 +216,13 @@ export const register = catchAsyncError(async (req, res, next) => {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "hasanulbanna2255@gmail.com",
-          pass: "wflv nsjo ofba rvov",
+          user: "contactus@anaraskills.org",
+          pass: "zcqs pmzb oahp msgl",
         },
       });
 
       const mailOptions = {
-        from: "hasanulbanna2255@gmail.com",
+        from: "contactus@anaraskills.org",
         to: email,
         subject: "Welcome to Anara Skills Foundation - Registration Successful",
         html: `
