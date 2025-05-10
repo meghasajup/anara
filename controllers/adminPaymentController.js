@@ -136,7 +136,7 @@ export const markAsPaid = async (req, res) => {
             });
         }
 
-        // Update payment details
+        // Update payment details 
         paymentRequest.status = 'paid';
         paymentRequest.razorpayPaymentId = razorpayPaymentId;
         paymentRequest.razorpayOrderId = razorpayOrderId;
