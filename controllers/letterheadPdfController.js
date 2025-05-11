@@ -110,12 +110,12 @@ export const editLetterheadPDF = async (req, res) => {
         await fs.writeFile(tempPath, pdfBuffer);
         
         // Delete the old PDF from Cloudinary
-        if (existingPDF.public_id) {
-            console.log(`Attempting to delete Cloudinary file with public_id: ${existingPDF.public_id}`);
-            await cloudinaryInstance.uploader.destroy(existingPDF.public_id, { resource_type: "raw" });
-        } else {
-            console.log("No public_id found for existing PDF, skipping Cloudinary delete");
-        }
+        // if (existingPDF.public_id) {
+        //     console.log(`Attempting to delete Cloudinary file with public_id: ${existingPDF.public_id}`);
+        //     await cloudinaryInstance.uploader.destroy(existingPDF.public_id, { resource_type: "raw" });
+        // } else {
+        //     console.log("No public_id found for existing PDF, skipping Cloudinary delete");
+        // }
         
         // Upload new PDF to Cloudinary
         const uploadResult = await cloudinaryInstance.uploader.upload(tempPath, {
