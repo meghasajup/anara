@@ -229,3 +229,17 @@ export const getSentMessages = async (req, res) => {
     }
   };
   
+  export const getLetterHeads = async(req, res)=>{
+    try {
+        const {id} = req.body;
+        let query = {};
+        if(id){
+            query._id = id;
+        }
+        const letterheads = await PDFFile.find(query);
+        res.status(200).json(letterheads);
+      } catch (err) {
+        console.error("❌ Get Letterheads Error:", err);
+        res.status(500).json({ error: "Failed to get letterheads" });
+      }
+  }
