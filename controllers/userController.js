@@ -177,10 +177,20 @@ export const register = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Invalid Volunteer Registration Number. Please check and try again.", 400));
     }
 
-    // Ensure regNumber is generated before creating the user
-    const lastUser = await User.findOne().sort({ createdAt: -1 }); // Find the last registered user
-    const lastRegNumber = lastUser?.regNumber?.split("/")?.pop() || "00000"; // Extract last reg number
-    const regNumber = `ASF/CANDIDATE/${String(Number(lastRegNumber) + 1).padStart(5, "0")}`;
+    // Auto-generate unique regNumber - FIXED CODE HERE
+    const lastUser = await User.findOne().sort({ createdAt: -1 });
+    let nextNumber = 1;
+    if (lastUser && lastUser.regNumber) {
+      const match = lastUser.regNumber.match(/\d+$/);
+      if (match) nextNumber = parseInt(match[0]) + 1;
+    }
+    const regNumber = `ASF/CANDIDATE/${nextNumber.toString().padStart(5, "0")}`;
+
+    // Check for duplicate regNumber (edge case)
+    const existingUser = await User.findOne({ regNumber });
+    if (existingUser) {
+      return next(new ErrorHandler("User with this registration number already exists.", 400));
+    }
 
     // Debugging: Check if regNumber is null
     console.log("Generated regNumber:", regNumber);
@@ -290,7 +300,7 @@ export const register = catchAsyncError(async (req, res, next) => {
 //Login
 export const login = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
-  
+
 
 
   if (!email || !password) {
@@ -476,31 +486,31 @@ export const checkCCCStatus = catchAsyncError(async (req, res, next) => {
 
 // Get all courses for user 
 export const getCoursesForUser = catchAsyncError(async (req, res, next) => {
-    
-    const userQualification = req.user.educationQualification;
-    const qualificationOrder = ["5th", "6th", "7th", "8th", "9th", "10th", "ITI"];
 
-    const userIndex = qualificationOrder.indexOf(userQualification);
-    if (userIndex === -1) {
-      return res.status(400).json({ success: false, message: "Invalid qualification" });
-    }
+  const userQualification = req.user.educationQualification;
+  const qualificationOrder = ["5th", "6th", "7th", "8th", "9th", "10th", "ITI"];
 
-    if (!userQualification) {
-      return res.status(400).json({
-        success: false,
-        message: "User qualification not found",
-      });
-    }
+  const userIndex = qualificationOrder.indexOf(userQualification);
+  if (userIndex === -1) {
+    return res.status(400).json({ success: false, message: "Invalid qualification" });
+  }
 
-    const jobRoles = await JobRole.find()
-      .select("name description courses")
-      .populate({
-        path: "courses",
-        select: "title description duration qualifications image", // include qualification for filtering
-      });
+  if (!userQualification) {
+    return res.status(400).json({
+      success: false,
+      message: "User qualification not found",
+    });
+  }
 
-    // Filter courses based on qualification
-    const filteredJobRoles = jobRoles
+  const jobRoles = await JobRole.find()
+    .select("name description courses")
+    .populate({
+      path: "courses",
+      select: "title description duration qualifications image", // include qualification for filtering
+    });
+
+  // Filter courses based on qualification
+  const filteredJobRoles = jobRoles
     .map(role => {
       const eligibleCourses = role.courses.filter(course => {
         const courseIndex = qualificationOrder.indexOf(course.qualifications);
@@ -513,8 +523,8 @@ export const getCoursesForUser = catchAsyncError(async (req, res, next) => {
     })
     .filter(role => role.courses.length > 0);
 
-    res.status(200).json({ success: true, jobRoles: filteredJobRoles });
-  });
+  res.status(200).json({ success: true, jobRoles: filteredJobRoles });
+});
 
 
 
@@ -593,7 +603,7 @@ export const updateCourses = catchAsyncError(async (req, res, next) => {
   if (!courseExists) {
     return next(new ErrorHandler("Invalid course ID", 400));
   }
-  
+
   user.selectedCourse = courseId;
   await user.save();
 
