@@ -166,10 +166,12 @@ export const uploadFile = async (req, res) => {
    
     const file_link = [];
     const publicIds = [];
-
+   const filesMeta = req.body.files || [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const customName = body[`files[${i}][name]`] || file.originalname?.split('.')[0];
+      const fileMeta = Array.isArray(filesMeta) ? filesMeta[i] : null;
+
+      const uploadedFileName = fileMeta?.name || file.originalname;
       // console.log(body[`files[${i}][name]`]);
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -188,7 +190,7 @@ export const uploadFile = async (req, res) => {
       file_link.push({
         public_id: result.public_id,
         url: result.secure_url,
-        file_name: customName
+        file_name: uploadedFileName
       });
       publicIds.push(result.public_id);
     }
@@ -281,10 +283,11 @@ export const editFile = async (req, res) => {
     if (!letterHead.isSent) {
       for (const fileId of file_ids) {
         const fileIndex = letterHead.file_link.findIndex(f => f.public_id === fileId);
+        const idIndex = letterHead.public_id.findIndex(f => f === fileId);
         if (fileIndex !== -1) {
           await cloudinary.uploader.destroy(fileId);
           letterHead.file_link.splice(fileIndex, 1); // Remove from DB array
-          letterHead.public_id.splice(fileIndex, 1);
+          letterHead.public_id.splice(idIndex, 1);
         }
       }
     }
