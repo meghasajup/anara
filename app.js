@@ -38,7 +38,7 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     }, // Your frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE","PATCH"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true, // Allow cookies and authorization headers
   })
 );
@@ -51,14 +51,14 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/v1/user", userRouter);
-app.use("/api/v1/volunteer", volunteerRouter);
-app.use("/api/v1/admin", adminRouter);
-app.use('/api/v1/payment-requests', volunteerPaymentRouter);
-app.use('/api/v1/admin/payment-requests', adminPaymentRouter);
-app.use('/api/v1/admin/uploads', uploadRouter);
+app.use("/api/v1/user", userRouter); // user
+app.use("/api/v1/volunteer", volunteerRouter); // volunteer
+app.use("/api/v1/admin", adminRouter); // admin
+app.use('/api/v1/payment-requests', volunteerPaymentRouter); // volunteer payment
+app.use('/api/v1/admin/payment-requests', adminPaymentRouter); // admin payment
+app.use('/api/v1/admin/uploads', uploadRouter); // admin upload
+app.use('/api/v1/admin/pdf', letterheadPdfRoutes); // Letterheads pdf
 
-app.use('/api/v1/admin/pdf',letterheadPdfRoutes);
 removeUnverifiedAccounts();
 connection();
 

@@ -10,6 +10,3 @@ export const removeUnverifiedAccounts = () => {
     });
   });
 };
-
-
-

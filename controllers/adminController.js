@@ -106,6 +106,7 @@ export const logout = catchAsyncError(async (req, res, next) => {
 
 
 
+
 //GetAdmin
 export const getadmin = catchAsyncError(async (req, res, next) => {
   const admin = req.admin;
@@ -114,7 +115,6 @@ export const getadmin = catchAsyncError(async (req, res, next) => {
     admin
   });
 });
-
 
 
 
@@ -228,7 +228,6 @@ export const getAllVolunteers = catchAsyncError(async (req, res, next) => {
             tempRegNumber: volunteer.tempRegNumber,
             isBlocked: volunteer.isBlocked,
             email: volunteer.email
-            // Add more fields as needed
           },
           userCount,
         };
@@ -249,12 +248,10 @@ export const getAllVolunteers = catchAsyncError(async (req, res, next) => {
 
 
 
-
-
 //Get all users in Admin Dashboard
 export const getAllUsers = catchAsyncError(async (req, res, next) => {
   try {
-    const users = await User.find({}); // Add filter if needed
+    const users = await User.find({});
 
     const userData = await Promise.all(
       users.map(async (user) => {
@@ -271,7 +268,6 @@ export const getAllUsers = catchAsyncError(async (req, res, next) => {
             regNumber: user.regNumber,
             isBlocked: user.isBlocked,
             createdAt: user.createdAt,
-            // Add more user fields as needed
           },
           volunteerInfo: volunteer
             ? {
@@ -509,11 +505,13 @@ export const createJobRole = catchAsyncError(async (req, res, next) => {
 
 
 
+
 // Get all job roles with course details
 export const getJobRoles = catchAsyncError(async (req, res, next) => {
   const roles = await JobRole.find().populate('courses');
   res.status(200).json({ success: true, roles });
 });
+
 
 
 
@@ -571,6 +569,10 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
   });
 };
 
+
+
+
+
 // Create a course
 export const createCourse = catchAsyncError(async (req, res, next) => {
   const { title, description, jobRoles, qualifications } = req.body;
@@ -604,6 +606,7 @@ export const createCourse = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Failed to create course.", 500));
   }
 });
+
 
 
 
@@ -656,6 +659,7 @@ export const updateCourse = catchAsyncError(async (req, res, next) => {
     message: "Course updated successfully",
   });
 });
+
 
 
 
@@ -724,7 +728,7 @@ export const deleteCourse = catchAsyncError(async (req, res, next) => {
   const public_id = url.split('/').slice(-2).join('/').split('.')[0]; // signatures/sample-image
 
   await cloudinaryInstance.uploader.destroy(public_id);
-  
+
   // Remove this course from all job roles that have it
   await JobRole.updateMany(
     { courses: course._id },

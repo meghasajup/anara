@@ -1,5 +1,6 @@
 import { PaymentRequest } from '../models/paymentModel.js';
 
+//Get all payment request
 export const getAllPaymentRequests = async (req, res) => {
     try {
         const { status } = req.query;
@@ -26,6 +27,11 @@ export const getAllPaymentRequests = async (req, res) => {
     }
 };
 
+
+
+
+
+//Approve payment
 export const approvePaymentRequest = async (req, res) => {
     try {
         const { requestId } = req.params;
@@ -76,6 +82,11 @@ export const approvePaymentRequest = async (req, res) => {
     }
 };
 
+
+
+
+
+//Reject payment
 export const rejectPaymentRequest = async (req, res) => {
     try {
         const { requestId } = req.params;
@@ -118,6 +129,11 @@ export const rejectPaymentRequest = async (req, res) => {
     }
 };
 
+
+
+
+
+//Mark paid
 export const markAsPaid = async (req, res) => {
     try {
         const { requestId } = req.params;

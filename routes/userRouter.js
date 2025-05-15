@@ -49,15 +49,15 @@ router.post("/forgot-password", forgotPassword); //Forgot password
 router.put("/reset-password/:token", resetPassword); //Reset password with token
 
 // ----Dashboard-----
-router.post("/update-ccc-status", isAuthenticated,upload.fields([{ name: "cccCertificate", maxCount: 1 }]),updateCCCStatus); //Update CCC status with certificate upload
+router.post("/update-ccc-status", isAuthenticated, upload.fields([{ name: "cccCertificate", maxCount: 1 }]), updateCCCStatus); //Update CCC status with certificate upload
 
 router.get('/ccc-status', isAuthenticated, checkCCCStatus); //Get CCC status
 
-router.get("/courses", isAuthenticated,getCoursesForUser); //Courses
+router.get("/courses", isAuthenticated, getCoursesForUser); //Courses
 
-router.get("/search-courses",isAuthenticated, searchCourses); //Search courses
+router.get("/search-courses", isAuthenticated, searchCourses); //Search courses
 
-router.post("/select", isAuthenticated,selectCourse); //Select course
+router.post("/select", isAuthenticated, selectCourse); //Select course
 
 router.post("/update-job-courses", isAuthenticated, updateCourses); //Update job-roles and course
 

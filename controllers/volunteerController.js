@@ -156,14 +156,14 @@ export const register = catchAsyncError(async (req, res, next) => {
       employmentStatus,
       undertaking
     };
-    
+
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => !value)
       .map(([key]) => key);
-    
+
     if (missingFields.length > 0) {
       return next(new ErrorHandler(`Missing required field(s): ${missingFields.join(', ')}`, 400));
-    }    
+    }
 
     if (undertaking !== 'true' && undertaking !== true) {
       return next(new ErrorHandler("Confirmation is required.", 400));
@@ -404,6 +404,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
 
 
 
+//GEt users under volunteer
 export const getUsersUnderVolunteer = catchAsyncError(async (req, res, next) => {
   const volunteer = req.volunteer;
 

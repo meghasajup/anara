@@ -464,6 +464,7 @@ export const updateCCCStatus = catchAsyncError(async (req, res, next) => {
 
 
 
+
 //Check CCC
 export const checkCCCStatus = catchAsyncError(async (req, res, next) => {
   const user = req.user;
@@ -528,6 +529,8 @@ export const getCoursesForUser = catchAsyncError(async (req, res, next) => {
 
 
 
+
+
 // Search courses based on name 
 export const searchCourses = catchAsyncError(async (req, res, next) => {
   const { keyword } = req.query;
@@ -549,6 +552,7 @@ export const searchCourses = catchAsyncError(async (req, res, next) => {
     courses,
   });
 });
+
 
 
 
@@ -584,6 +588,7 @@ export const selectCourse = catchAsyncError(async (req, res, next) => {
 
 
 
+
 //Update course
 export const updateCourses = catchAsyncError(async (req, res, next) => {
   const { courseId } = req.body;
@@ -612,6 +617,7 @@ export const updateCourses = catchAsyncError(async (req, res, next) => {
     message: "Course updated successfully.",
   });
 });
+
 
 
 

@@ -44,6 +44,6 @@ router.post("/forgot-password", forgotPassword); //Forgot password
 
 router.put("/reset-password/:token", resetPassword); //Reset password with token
 
-router.get("/usersdetails",isVolunteerAuthenticated, getUsersUnderVolunteer);
+router.get("/usersdetails", isVolunteerAuthenticated, getUsersUnderVolunteer); //Get users under volunteer
 
 export default router;

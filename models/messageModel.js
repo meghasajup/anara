@@ -1,4 +1,3 @@
-// models/SentMessage.js
 import mongoose from "mongoose";
 
 const sentMessageSchema = new mongoose.Schema({

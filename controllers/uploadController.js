@@ -3,79 +3,89 @@ import { Signature } from '../models/signatureModel.js';
 import { LetterHead } from "../models/letterHeadModel.js";
 import { Document } from "../models/Documents.js";
 
+//Upload image
 export const uploadImage = async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-      console.log(req.body);
-      const { userId, userName } = req.body;
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    console.log(req.body);
+    const { userId, userName } = req.body;
 
-      if (!userId || !userName) {
-        return res.status(400).json({ message: "User ID and name are required" });
-      }
+    if (!userId || !userName) {
+      return res.status(400).json({ message: "User ID and name are required" });
+    }
 
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: 'signatures', // ✅ Optional folder name in Cloudinary
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-          }
-        );
-        stream.end(req.file.buffer);
-      });
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'signatures', // ✅ Optional folder name in Cloudinary
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
 
-      const signature = await Signature.create({
-        url: result.secure_url,
-        public_id: result.public_id,
-        userId: userId,
-        name: userName
-      });
+    const signature = await Signature.create({
+      url: result.secure_url,
+      public_id: result.public_id,
+      userId: userId,
+      name: userName
+    });
 
+    return res.status(200).json({
+      message: "Image uploaded successfully",
+      data: signature
+    });
+
+  } catch (error) {
+    console.error("Upload error:", error);
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+
+//Delete image
+export const deleteImage = async (req, res) => {
+  const { public_id } = req.params;
+
+  try {
+    const result = await cloudinary.uploader.destroy(public_id);
+
+    const deletedSignature = await Signature.findOneAndDelete({ public_id });
+
+    if (deletedSignature) {
       return res.status(200).json({
-        message: "Image uploaded successfully",
-        data: signature
+        message: "Image deleted successfully from both Cloudinary and the database",
       });
-  
-    } catch (error) {
-      console.error("Upload error:", error);
-      return res.status(500).json({
-        message: "Something went wrong",
-        error: error.message,
+    } else {
+      return res.status(404).json({
+        message: "Image not found in the database",
       });
     }
-  };
+  } catch (error) {
+    console.error("Delete error:", error);
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
 
-  export const deleteImage = async (req, res) => {
-    const { public_id } = req.params;
-  
-    try {
-      const result = await cloudinary.uploader.destroy(public_id);
-  
-      const deletedSignature = await Signature.findOneAndDelete({ public_id });
 
-      if (deletedSignature) {
-        return res.status(200).json({
-          message: "Image deleted successfully from both Cloudinary and the database",
-        });
-      } else {
-        return res.status(404).json({
-          message: "Image not found in the database",
-        });
-      }
-    } catch (error) {
-      console.error("Delete error:", error);
-      return res.status(500).json({
-        message: "Something went wrong",
-        error: error.message,
-      });
-    }
-  };
-  
 
+
+
+//Get image
 export const getImages = async (req, res) => {
   try {
     const imageUrls = await Signature.find().select("url public_id userId name");
@@ -88,15 +98,20 @@ export const getImages = async (req, res) => {
     });
   }
 };
-  
+
+
+
+
+
+//Edit image
 export const editImage = async (req, res) => {
   const { public_id } = req.params;
-  const {name} = req.body;
+  const { name } = req.body;
   try {
 
     // Step 1: Find the image in the database by its public_id
     const signature = await Signature.findOne({ public_id });
-    
+
     if (!signature) {
       return res.status(404).json({ message: "Signature not found" });
     }
@@ -135,8 +150,8 @@ export const editImage = async (req, res) => {
       signature.name = name;
     }
 
-    await signature.save(); 
-  
+    await signature.save();
+
     return res.status(200).json({
       message: "Signature updated successfully",
       data: {
@@ -154,6 +169,11 @@ export const editImage = async (req, res) => {
   }
 };
 
+
+
+
+
+//Upload file
 export const uploadFile = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -162,11 +182,11 @@ export const uploadFile = async (req, res) => {
 
     const files = req.files;
     const body = req.body;
-    const {subject, body_text, image_id} = req.body;
-   
+    const { subject, body_text, image_id } = req.body;
+
     const file_link = [];
     const publicIds = [];
-   const filesMeta = req.body.files || [];
+    const filesMeta = req.body.files || [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const fileMeta = Array.isArray(filesMeta) ? filesMeta[i] : null;
@@ -186,7 +206,7 @@ export const uploadFile = async (req, res) => {
         );
         stream.end(file.buffer);
       });
-    
+
       file_link.push({
         public_id: result.public_id,
         url: result.secure_url,
@@ -217,6 +237,11 @@ export const uploadFile = async (req, res) => {
   }
 };
 
+
+
+
+
+//Delete file
 export const deleteFile = async (req, res) => {
   const { id } = req.params;
 
@@ -251,19 +276,28 @@ export const deleteFile = async (req, res) => {
 };
 
 
-export const getFiles = async (req, res) => {
-try {
-  const files = await LetterHead.find().select("file_link image_id public_id subject body_text");
 
-  return res.status(200).json({ files });
-} catch (error) {
-  return res.status(500).json({
-    message: "Failed to fetch images",
-    error: error.message,
-  });
-}
+
+
+//Get files
+export const getFiles = async (req, res) => {
+  try {
+    const files = await LetterHead.find().select("file_link image_id public_id subject body_text");
+
+    return res.status(200).json({ files });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch images",
+      error: error.message,
+    });
+  }
 };
 
+
+
+
+
+//Edit files
 export const editFile = async (req, res) => {
   const { id } = req.params;
   const { file_ids, subject, body_text, image_id } = req.body;
@@ -293,12 +327,12 @@ export const editFile = async (req, res) => {
         }
       }
     }
-    
+
     const filesMeta = req.body.files || [];
 
     const uploadedFiles = [];
 
-      for (let i = 0; i < req.files.length; i++) {
+    for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const fileMeta = Array.isArray(filesMeta) ? filesMeta[i] : null;
 
@@ -354,6 +388,11 @@ export const editFile = async (req, res) => {
   }
 };
 
+
+
+
+
+//Upload doc file
 export const uploadDocFile = async (req, res) => {
   try {
     if (!req.file) {
@@ -393,6 +432,11 @@ export const uploadDocFile = async (req, res) => {
   }
 };
 
+
+
+
+
+//Get docs
 export const getDocuments = async (req, res) => {
   try {
     const documents = await Document.find().sort({ uploadedAt: -1 }); // newest first

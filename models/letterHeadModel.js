@@ -11,7 +11,7 @@ const letterHeadSchema = new mongoose.Schema({
   },
   image_id: {
     type: String,
-    ref: 'Document', // or another image model you use
+    ref: 'Document', 
     required: false
   },
   public_id: {
@@ -24,7 +24,7 @@ const letterHeadSchema = new mongoose.Schema({
   },
   isSent: {
     type: Boolean,
-    default: false 
+    default: false
   },
   createdAt: {
     type: Date,

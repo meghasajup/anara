@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const JobRoleSchema = new mongoose.Schema({
   name: {
     type: String,
-   
+
   },
   description: {
     type: String,

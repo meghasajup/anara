@@ -158,13 +158,13 @@ const volunteerSchema = new mongoose.Schema({
     type: String,
     unique: true
   },
-  isBlocked:{
-    type:Boolean,
-    default:false
+  isBlocked: {
+    type: Boolean,
+    default: false
   },
   isPayment: {
-    type:Boolean,
-    default:false
+    type: Boolean,
+    default: false
   }
 });
 
