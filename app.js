@@ -54,7 +54,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/volunteer", volunteerRouter);
 app.use("/api/v1/admin", adminRouter);
-app.use('/api/v1/payment-requests', volunteerPaymentRouter);
+app.use('/api/v1/volunteer/payment-requests', volunteerPaymentRouter);
 app.use('/api/v1/admin/payment-requests', adminPaymentRouter);
 app.use('/api/v1/admin/uploads', uploadRouter);
 
