@@ -57,6 +57,7 @@ router.put("/volunteer/block/:regNumber", isAdminAuthenticated, toggleVolunteerB
 router.get("/user/:regNumber", isAdminAuthenticated, getUserByRegNumber); //Get User By RegNumber
 
 router.put("/users/block/:regNumber", isAdminAuthenticated, toggleUserBlock); //Toggle User Block
+ 
 
 // Course role routes
 router.post("/courses", isAdminAuthenticated, upload.fields([{ name: 'image', maxCount: 1 }]), createCourse); // create course
@@ -66,6 +67,7 @@ router.put("/edit-courses/:id", isAdminAuthenticated, upload.fields([{ name: 'im
 router.get("/courses", isAdminAuthenticated, getCourses); // Get course
 
 router.delete("/courses/:id", isAdminAuthenticated, deleteCourse); // Delete course
+
 
 // Job role routes
 router.post("/jobroles", isAdminAuthenticated, createJobRole); //Create job-roles

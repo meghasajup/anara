@@ -10,6 +10,8 @@ import { cloudinaryInstance } from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import { JobRole } from "../models/JobRoles.js";
 import { Course } from "../models/Course.js";
+import dotenv from "dotenv";
+dotenv.config({ path: "./config.env" });
 const otpStore = new Map();
 
 //Send email otp
@@ -131,12 +133,12 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, volunteerRegNum, pwdCategory, entrepreneurshipInterest, undertaking, educationQualification
+    name, email, phone, password, guardian, address, currentAddress, state, district, city, pincode, dob, gender, bankAccNumber, bankName, ifsc, volunteerRegNum, pwdCategory, entrepreneurshipInterest, undertaking, educationQualification
   } = req.body;
 
   try {
     // Check for required fields
-    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined || undertaking === undefined || !educationQualification) {
+    if (!name || !email || !phone || !password || !guardian || !address || !currentAddress || !state || !district || !city || !pincode || !dob || !gender || !bankAccNumber || !bankName || !ifsc || !volunteerRegNum || pwdCategory === undefined || entrepreneurshipInterest === undefined || undertaking === undefined || !educationQualification) {
       return next(new ErrorHandler("All fields are required.", 400));
     }
 
@@ -221,6 +223,10 @@ export const register = catchAsyncError(async (req, res, next) => {
       guardian,
       address,
       currentAddress,
+      state,
+      district,
+      city,
+      pincode,
       dob,
       gender,
       bankAccNumber: validBankAccNumber,
@@ -246,8 +252,8 @@ export const register = catchAsyncError(async (req, res, next) => {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "contactus@anaraskills.org",
-          pass: "zcqs pmzb oahp msgl",
+          user: process.env.SMTP_MAIL,
+          pass: process.env.SMTP_PASSWORD,
         },
       });
 
@@ -308,6 +314,10 @@ export const login = catchAsyncError(async (req, res, next) => {
   }
 
   const user = await User.findOne({ email }).select("+password");
+
+  if (user.isBlocked) {
+    return res.status(403).json({ message: 'Access denied. Candidate is blocked.' });
+  }
 
   if (!user || !user.accountVerified) {
     return next(new ErrorHandler("Account not verified. Please verify your email first.", 400));

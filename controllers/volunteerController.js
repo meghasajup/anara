@@ -133,7 +133,7 @@ export const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
 //Register
 export const register = catchAsyncError(async (req, res, next) => {
   const {
-    name, email, phone, password, guardian, age, address, currentAddress, dob, gender, bankAccNumber, bankName, ifsc, educationDegree, educationYearOfCompletion, employmentStatus, monthlyIncomeRange, undertaking
+    name, email, phone, password, guardian, age, address, currentAddress, state, district, city, pincode, dob, gender, bankAccNumber, bankName, ifsc, educationDegree, educationYearOfCompletion, employmentStatus, monthlyIncomeRange, undertaking
   } = req.body;
 
   try {
@@ -146,6 +146,10 @@ export const register = catchAsyncError(async (req, res, next) => {
       age,
       address,
       currentAddress,
+      state,
+      district,
+      city,
+      pincode,
       dob,
       gender,
       bankAccNumber,
@@ -206,6 +210,10 @@ export const register = catchAsyncError(async (req, res, next) => {
       password,
       guardian,
       address,
+      state,
+      district,
+      city,
+      pincode,
       age,
       currentAddress,
       dob,
@@ -296,6 +304,10 @@ export const login = catchAsyncError(async (req, res, next) => {
   }
 
   const volunteer = await Volunteer.findOne({ email }).select("+password");
+
+  if (volunteer.isBlocked) {
+    return res.status(403).json({ message: 'Access denied. Volunteer is blocked.' });
+  }
 
   if (!volunteer || !volunteer.accountVerified) {
     return next(new ErrorHandler("Account not verified. Please verify your email first.", 400));

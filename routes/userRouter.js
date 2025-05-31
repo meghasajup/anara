@@ -66,4 +66,3 @@ router.get("/course-selection", isAuthenticated,checkBlockedCandidate, checkCour
 
 
 export default router;
-

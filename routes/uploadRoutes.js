@@ -25,25 +25,33 @@ const upload = multer({
 
   const fileUpload = multer({
     storage,
-    // No file size or type restrictions for files
     limits: {
       fileSize: 100 * 1024 * 1024 // Optional: 100 MB max file size
     }
   });
 // Signature routes
-router.post('/upload', isAdminAuthenticated,upload.single('image'), uploadImage);
-router.delete('/delete/:public_id(*)', isAdminAuthenticated,deleteImage);
-router.get('/list',isAdminAuthenticated, getImages);
-router.put('/edit/:public_id(*)',isAdminAuthenticated, upload.single('image'), editImage);
+router.post('/upload', isAdminAuthenticated,upload.single('image'), uploadImage); // upload image
+
+router.delete('/delete/:public_id(*)', isAdminAuthenticated,deleteImage); // delete image
+
+router.get('/list',isAdminAuthenticated, getImages); // get all images 
+
+router.put('/edit/:public_id(*)',isAdminAuthenticated, upload.single('image'), editImage); // edit image
+
 
 // Letter head routes
-router.post('/file-upload', isAdminAuthenticated,fileUpload.any(), uploadFile);
-router.delete('/delete-file/:id',isAdminAuthenticated, deleteFile);
-router.get('/list-files',isAdminAuthenticated, getFiles);
-router.put('/edit-file/:id', isAdminAuthenticated,fileUpload.any(), editFile);
+router.post('/file-upload', isAdminAuthenticated,fileUpload.any(), uploadFile); //file upload
+
+router.delete('/delete-file/:id',isAdminAuthenticated, deleteFile); //delete file
+
+router.get('/list-files',isAdminAuthenticated, getFiles); //get files
+
+router.put('/edit-file/:id', isAdminAuthenticated,fileUpload.any(), editFile); //edit file
+
 
 // Document routes
-router.post('/upload-documents',isAdminAuthenticated, fileUpload.single('documents'), uploadDocFile);
-router.get('/list-documents',isAdminAuthenticated,  getDocuments);
+router.post('/upload-documents',isAdminAuthenticated, fileUpload.single('documents'), uploadDocFile); //upload document
+
+router.get('/list-documents',isAdminAuthenticated,  getDocuments); //get documents
 
 export default router;
