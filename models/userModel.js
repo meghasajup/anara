@@ -69,10 +69,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "District is required"]
   },
-  city: {
-    type: String,
-    required: [true, "City is required"]
-  },
   pincode: {
     type: String,
     required: [true, "Pin code is required"],
